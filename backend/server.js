@@ -6,8 +6,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-mongoose.connect("YOUR_MONGODB_URL");
-
+mongoose.connect("mongodb+srv://admin:Movies%40123@cluster0.2g9c2ox.mongodb.net/moviesdunia");
 const Movie = require('./models/Movie');
 
 app.get('/api/movies', async (req, res) => {
