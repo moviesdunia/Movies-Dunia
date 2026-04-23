@@ -1,32 +1,22 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ MongoDB connection
-mongoose.connect("mongodb+srv://admin:Movies%40123@cluster0.2g9c2ox.mongodb.net/moviesdunia")
-.then(() => console.log("MongoDB Connected"))
-.catch(err => console.log(err));
-
-// ✅ Simple route (test)
+// ✅ TEST ROUTE
 app.get('/', (req, res) => {
-  res.send("Movies Dunia Backend Running");
+  res.send("Backend Working 🚀");
 });
 
-// ✅ Movies API
-app.get('/api/movies', async (req, res) => {
+// ✅ API ROUTE
+app.get('/api/movies', (req, res) => {
   res.json([]);
 });
 
-// ✅ Telegram webhook (basic)
-app.post('/webhook', (req, res) => {
-  console.log("Webhook received");
-  res.sendStatus(200);
-});
-
-// ✅ FIXED PORT (important)
+// ✅ IMPORTANT (Railway port)
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log("Server running on port " + PORT));
+app.listen(PORT, () => {
+  console.log("Server running on port " + PORT);
+});
