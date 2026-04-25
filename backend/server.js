@@ -1,57 +1,20 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
-
-const app = express();
-app.use(cors());
-app.use(express.json());
-
-// ✅ MongoDB Connection
-mongoose.connect(process.env.MONGO_URI)
-.then(() => console.log("MongoDB Connected"))
-.catch(err => console.log(err));
-
-// ✅ Movie Schema
-const Movie = mongoose.model("Movie", {
-  title: String,
-  link: String,
-  createdAt: { type: Date, default: Date.now }
-});
-
-// ✅ Home Route
-app.get('/', (req, res) => {
-  res.send("Backend Working 🚀");
-});
-
-// ✅ Get Movies API
-app.get('/api/movies', async (req, res) => {
-  const movies = await Movie.find().sort({ createdAt: -1 });
-  res.json(movies);
-});
-
-// ✅ Telegram Webhook (IMPORTANT)
-app.post('/webhook', async (req, res) => {
-  try {
-    const message = req.body.channel_post; // for channel posts
-
-    if (message && message.text) {
-      const text = message.text;
-
-      await Movie.create({
-        title: text,
-        link: "https://t.me/MoviesUNeed" // 🔁 your channel link
-      });
-
-      console.log("Saved:", text);
-    }
-
-    res.sendStatus(200);
-  } catch (err) {
-    console.log("Webhook Error:", err);
-    res.sendStatus(500);
-  }
-});
-
-// ✅ Port
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log("Server running on " + PORT));
+2026-04-25T06:43:49.57786238Z ==> Cloning from https://github.com/moviesdunia/Movies-Dunia
+2026-04-25T06:43:50.249782741Z ==> Checking out commit 3a522cc69d73051253fb194e088259635a08dddc in branch main
+2026-04-25T06:43:51.679530444Z ==> Installing dependencies with npm...
+2026-04-25T06:43:57.651573725Z 
+2026-04-25T06:43:57.651605985Z added 96 packages, and audited 97 packages in 6s
+2026-04-25T06:43:57.651612645Z 
+2026-04-25T06:43:57.651801489Z 18 packages are looking for funding
+2026-04-25T06:43:57.651918932Z   run `npm fund` for details
+2026-04-25T06:43:57.653548124Z 
+2026-04-25T06:43:57.653562704Z found 0 vulnerabilities
+2026-04-25T06:43:58.565505119Z 
+2026-04-25T06:43:58.5655379Z up to date, audited 97 packages in 654ms
+2026-04-25T06:43:58.56555265Z 
+2026-04-25T06:43:58.565723694Z 18 packages are looking for funding
+2026-04-25T06:43:58.565869407Z   run `npm fund` for details
+2026-04-25T06:43:58.567518669Z 
+2026-04-25T06:43:58.56753682Z found 0 vulnerabilities
+2026-04-25T06:43:58.647046854Z ==> Empty build command; skipping build
+2026-04-25T06:43:59.582336595Z ==> Uploading build...
+2026-04-25T06:44:05.516669329Z ==> Your site is live 🎉
