@@ -11,7 +11,7 @@ app.post('/webhook', async (req, res) => {
       let poster = "";
       try {
         const response = await axios.get(
-          `https://www.omdbapi.com/?t=${encodeURIComponent(text)}&apikey=YOUR_OMDB_API_KEY`
+          `https://www.omdbapi.com/?t=${encodeURIComponent(text)}&apikey=eee94f23`
         );
         poster = response.data.Poster;
       } catch (err) {
