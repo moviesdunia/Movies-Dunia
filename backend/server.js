@@ -36,7 +36,9 @@ app.get('/api/movies', async (req, res) => {
 // ✅ Telegram Webhook
 app.post('/webhook', async (req, res) => {
   try {
-    const message = req.body.channel_post;
+    console.log("Incoming:", JSON.stringify(req.body));
+
+    const message = req.body.channel_post || req.body.message;
 
     if (message && message.text) {
       const text = message.text;
@@ -57,7 +59,6 @@ app.post('/webhook', async (req, res) => {
         console.log("OMDB Error:", err.message);
       }
 
-      // 🎭 Category Detection
       let category = "Other";
       const lower = text.toLowerCase();
 
@@ -65,7 +66,6 @@ app.post('/webhook', async (req, res) => {
       else if (lower.includes("tamil")) category = "Tamil";
       else if (lower.includes("bengali")) category = "Bengali";
 
-      // ✅ Save Movie
       await Movie.create({
         title: text,
         link: "https://t.me/MoviesUNeed",
