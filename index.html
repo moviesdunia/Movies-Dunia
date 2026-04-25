@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Movies Dunia</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial;
+      background: #0f0f0f;
+      color: white;
+      margin: 0;
+    }
+
+    header {
+      background: #111;
+      padding: 15px;
+      text-align: center;
+      font-size: 24px;
+      font-weight: bold;
+      color: #00ffcc;
+    }
+
+    .search-box {
+      padding: 10px;
+      text-align: center;
+    }
+
+    input {
+      width: 90%;
+      padding: 10px;
+      border-radius: 5px;
+      border: none;
+    }
+
+    .movies {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+      padding: 10px;
+    }
+
+    .card {
+      background: #1c1c1c;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
+    .card h3 {
+      font-size: 16px;
+    }
+
+    .btn {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 5px 10px;
+      background: #00ffcc;
+      color: black;
+      text-decoration: none;
+      border-radius: 5px;
+    }
+  </style>
+</head>
+
+<body>
+
+<header>🎬 Movies Dunia</header>
+
+<div class="search-box">
+  <input type="text" id="search" placeholder="Search movies...">
+</div>
+
+<div class="movies" id="movies"></div>
+
+<script>
+const API = "https://movies-dunia-1.onrender.com/api/movies";
+
+let allMovies = [];
+
+async function loadMovies() {
+  const res = await fetch(API);
+  const data = await res.json();
+  allMovies = data;
+  displayMovies(data);
+}
+
+function displayMovies(movies) {
+  const container = document.getElementById("movies");
+  container.innerHTML = "";
+
+  movies.forEach(movie => {
+    container.innerHTML += `
+      <div class="card">
+        <h3>${movie.title}</h3>
+        <a href="${movie.link}" target="_blank" class="btn">Watch</a>
+      </div>
+    `;
+  });
+}
+
+// 🔍 Search
+document.getElementById("search").addEventListener("input", function() {
+  const value = this.value.toLowerCase();
+
+  const filtered = allMovies.filter(m =>
+    m.title.toLowerCase().includes(value)
+  );
+
+  displayMovies(filtered);
+});
+
+loadMovies();
+</script>
+
+</body>
+</html>
