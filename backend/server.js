@@ -11,11 +11,11 @@ app.post('/webhook', async (req, res) => {
       let poster = "";
       try {
         const response = await axios.get(
-          `https://www.omdbapi.com/?t=${encodeURIComponent(text)}&apikey=eee94f23`
-        );
-        poster = response.data.Poster;
-      } catch (err) {
-        poster = "";
+  `https://www.omdbapi.com/?t=${encodeURIComponent(text)}&apikey=eee94f23`
+);
+
+const poster = response.data.Poster;
+const rating = response.data.imdbRating;
       }
 
       // 🎭 Detect category
