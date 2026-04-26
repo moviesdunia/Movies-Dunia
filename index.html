@@ -1,31 +1,28 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Movies Dunia OTT</title>
+  <title>Movies Dunia</title>
 
   <style>
     body {
       margin: 0;
-      background: #0b0b0b;
+      background: #000;
       color: white;
-      font-family: Arial;
+      font-family: Arial, sans-serif;
     }
 
-    /* NAVBAR */
-    .nav {
+    header {
       display: flex;
       justify-content: space-between;
-      padding: 15px;
-      background: black;
-      position: sticky;
-      top: 0;
-      z-index: 10;
+      padding: 15px 30px;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+      position: fixed;
+      width: 100%;
+      z-index: 100;
     }
 
-    .logo {
-      font-size: 22px;
+    header h1 {
       color: red;
-      font-weight: bold;
     }
 
     input {
@@ -35,215 +32,181 @@
     }
 
     /* HERO */
-    .hero {
-      height: 60vh;
+    #hero {
+      height: 90vh;
       background-size: cover;
+      background-position: center;
       display: flex;
-      align-items: end;
-      padding: 20px;
+      flex-direction: column;
+      justify-content: center;
+      padding: 50px;
     }
 
-    .hero h1 {
-      font-size: 40px;
-      background: rgba(0,0,0,0.6);
-      padding: 10px;
-      border-radius: 5px;
+    #heroTitle {
+      font-size: 50px;
+      font-weight: bold;
     }
 
-    /* FILTER */
-    .filters {
-      padding: 10px;
-    }
-
-    .filters button {
-      margin-right: 10px;
-      padding: 8px 15px;
-      border-radius: 20px;
+    #hero button {
+      padding: 10px 20px;
+      margin-top: 20px;
+      background: red;
       border: none;
-      background: #333;
       color: white;
+      font-size: 16px;
       cursor: pointer;
     }
 
-    .filters button.active {
-      background: red;
+    /* ROWS */
+    .section {
+      margin-top: -100px;
+      padding: 20px;
     }
 
-    /* ROW */
     .row {
       display: flex;
       overflow-x: auto;
-      gap: 10px;
-      padding: 10px;
+    }
+
+    .row::-webkit-scrollbar {
+      display: none;
     }
 
     .card {
-      min-width: 180px;
-      position: relative;
+      min-width: 200px;
+      margin-right: 10px;
       transition: transform 0.3s;
+      cursor: pointer;
     }
 
     .card:hover {
-      transform: scale(1.1);
+      transform: scale(1.15);
+      z-index: 2;
     }
 
     .card img {
       width: 100%;
-      border-radius: 10px;
+      height: 280px;
+      border-radius: 6px;
+      object-fit: cover;
     }
 
     .title {
-      position: absolute;
-      bottom: 10px;
-      left: 10px;
       font-size: 14px;
-      background: rgba(0,0,0,0.7);
-      padding: 5px;
-      border-radius: 4px;
-    }
-
-    /* PLAYER */
-    #playerModal {
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: black;
-      display: none;
-      justify-content: center;
-      align-items: center;
-      flex-direction: column;
+      text-align: center;
+      margin-top: 5px;
     }
 
     video {
-      width: 90%;
-      max-height: 80%;
-    }
-
-    .close {
-      position: absolute;
-      top: 20px;
-      right: 30px;
-      font-size: 30px;
-      cursor: pointer;
+      width: 100%;
+      position: fixed;
+      bottom: 0;
+      background: black;
     }
   </style>
 </head>
 
 <body>
 
-<!-- NAV -->
-<div class="nav">
-  <div class="logo">🎬 Movies Dunia</div>
-  <input type="text" id="search" placeholder="Search movies...">
+<header>
+  <h1>🎬 Movies Dunia</h1>
+  <input type="text" id="search" placeholder="Search..." onkeyup="searchMovies()">
+</header>
+
+<div id="hero">
+  <div id="heroTitle"></div>
+  <button onclick="playHero()">▶ Play</button>
 </div>
 
-<!-- HERO -->
-<div class="hero" id="hero">
-  <h1 id="heroTitle">Loading...</h1>
+<div class="section">
+  <h2>🔥 Trending</h2>
+  <div class="row" id="trending"></div>
+
+  <h2>🆕 Latest</h2>
+  <div class="row" id="latest"></div>
+
+  <h2>🎥 All Movies</h2>
+  <div class="row" id="all"></div>
 </div>
 
-<!-- FILTER -->
-<div class="filters">
-  <button onclick="filterMovies('all')" class="active">All</button>
-  <button onclick="filterMovies('hindi')">Hindi</button>
-  <button onclick="filterMovies('tamil')">Tamil</button>
-</div>
-
-<h2>Trending</h2>
-<div class="row" id="trending"></div>
-
-<h2>Latest</h2>
-<div class="row" id="latest"></div>
-
-<!-- PLAYER -->
-<div id="playerModal">
-  <span class="close" onclick="closePlayer()">❌</span>
-  <video id="player" controls autoplay></video>
-</div>
+<video id="player" controls style="display:none;"></video>
 
 <script>
-const API = "https://movies-dunia-1.onrender.com/movies";
+const API = "/api/videos";
 let allMovies = [];
+let heroMovie = null;
 
-/* LOAD MOVIES */
-fetch(API)
-  .then(res => res.json())
-  .then(data => {
-    allMovies = data;
+async function loadMovies() {
+  const res = await fetch(API);
+  const data = await res.json();
 
-    if (data.length > 0) {
-      document.getElementById("hero").style.backgroundImage = `url(${data[0].poster})`;
-      document.getElementById("heroTitle").innerText = data[0].title;
-    }
+  allMovies = data;
+  heroMovie = data[0];
 
-    render(data);
-  });
+  // HERO
+  document.getElementById("hero").style.backgroundImage =
+    `url(${heroMovie.secure_url})`;
 
-/* RENDER */
+  document.getElementById("heroTitle").innerText =
+    formatTitle(heroMovie.public_id);
+
+  render(data);
+}
+
 function render(movies) {
   const trending = document.getElementById("trending");
   const latest = document.getElementById("latest");
+  const all = document.getElementById("all");
 
   trending.innerHTML = "";
   latest.innerHTML = "";
+  all.innerHTML = "";
 
   movies.forEach((movie, i) => {
+
     const card = `
-      <div class="card" onclick="play('${movie.videoUrl}')">
-        <img src="${movie.poster}">
-        <div class="title">${movie.title}</div>
+      <div class="card" onclick="play('${movie.secure_url}')">
+        <img src="${movie.secure_url}">
+        <div class="title">${formatTitle(movie.public_id)}</div>
       </div>
     `;
 
     if (i % 2 === 0) trending.innerHTML += card;
     else latest.innerHTML += card;
+
+    all.innerHTML += card;
   });
 }
 
-/* SEARCH */
-document.getElementById("search").addEventListener("input", (e) => {
-  const val = e.target.value.toLowerCase();
-
-  const filtered = allMovies.filter(m =>
-    m.title.toLowerCase().includes(val)
-  );
-
-  render(filtered);
-});
-
-/* FILTER */
-function filterMovies(type) {
-  document.querySelectorAll(".filters button").forEach(btn => btn.classList.remove("active"));
-  event.target.classList.add("active");
-
-  if (type === "all") return render(allMovies);
-
-  const filtered = allMovies.filter(m =>
-    m.category.toLowerCase().includes(type)
-  );
-
-  render(filtered);
-}
-
-/* PLAYER */
 function play(url) {
-  const modal = document.getElementById("playerModal");
   const player = document.getElementById("player");
-
-  modal.style.display = "flex";
+  player.style.display = "block";
   player.src = url;
   player.play();
 }
 
-function closePlayer() {
-  const modal = document.getElementById("playerModal");
-  const player = document.getElementById("player");
-
-  modal.style.display = "none";
-  player.pause();
+function playHero() {
+  play(heroMovie.secure_url);
 }
+
+function formatTitle(name) {
+  return name
+    .replace("samples/", "")
+    .replace(/-/g, " ")
+    .toUpperCase();
+}
+
+function searchMovies() {
+  const q = document.getElementById("search").value.toLowerCase();
+
+  const filtered = allMovies.filter(m =>
+    m.public_id.toLowerCase().includes(q)
+  );
+
+  render(filtered);
+}
+
+loadMovies();
 </script>
 
 </body>
