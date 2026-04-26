@@ -10,95 +10,51 @@ body {
   margin: 0;
   font-family: Arial;
   background: #f5f5f5;
-  color: #111;
 }
 
 header {
   padding: 15px;
   font-size: 24px;
-  font-weight: bold;
   color: #e50914;
+  font-weight: bold;
 }
 
-.search-box {
-  padding: 10px;
-}
-
-input {
-  width: 100%;
-  padding: 12px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-}
-
-/* CATEGORY */
-.categories {
-  display: flex;
+.movies {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px,1fr));
   gap: 10px;
   padding: 10px;
 }
 
-.categories button {
-  background: #ddd;
-  padding: 8px 15px;
-  border-radius: 20px;
-  border: none;
-}
-
-.categories .active {
-  background: #e50914;
-  color: white;
-}
-
-/* MOVIES GRID */
-.movies {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
-  gap: 12px;
-  padding: 10px;
-}
-
-/* CARD */
 .card {
   background: white;
   border-radius: 10px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
-/* POSTER */
 .card img {
   width: 100%;
   height: 220px;
   object-fit: cover;
 }
 
-/* INFO ALWAYS VISIBLE */
 .info {
-  padding: 10px;
+  padding: 8px;
 }
 
 .title {
-  font-size: 14px;
   font-weight: bold;
-  margin-bottom: 5px;
 }
 
-.rating {
-  font-size: 12px;
-  margin-bottom: 8px;
-}
-
-/* BUTTONS */
 .btn {
-  display: inline-block;
-  padding: 5px 8px;
   background: #e50914;
   color: white;
+  padding: 5px;
+  margin-top: 5px;
+  display: inline-block;
+  font-size: 12px;
   border-radius: 5px;
   text-decoration: none;
-  font-size: 12px;
-  margin-right: 5px;
 }
 
 /* MODAL */
@@ -123,94 +79,42 @@ input {
 
 <header>🎬 Movies Dunia</header>
 
-<div class="search-box">
-  <input id="search" placeholder="Search movies...">
-</div>
-
-<div class="categories">
-  <button class="active" onclick="filterCat('All', this)">All</button>
-  <button onclick="filterCat('Hindi', this)">Hindi</button>
-  <button onclick="filterCat('Tamil', this)">Tamil</button>
-</div>
-
 <div class="movies" id="movies"></div>
 
-<!-- TRAILER -->
 <div class="modal" id="modal" onclick="closeModal()">
-  <iframe id="trailer" frameborder="0" allowfullscreen></iframe>
+  <iframe id="trailer" allowfullscreen></iframe>
 </div>
 
 <script>
 const API = "https://movies-dunia-1.onrender.com/api/movies";
 
-let allMovies = [];
-
-// LOAD
 async function loadMovies() {
   const res = await fetch(API);
   const data = await res.json();
-  allMovies = data;
-  displayMovies(data);
-}
 
-// DISPLAY
-function displayMovies(movies) {
   const container = document.getElementById("movies");
   container.innerHTML = "";
 
-  movies.forEach(m => {
-
-    const poster = m.poster && m.poster !== "N/A"
-      ? m.poster
-      : "https://via.placeholder.com/300x450?text=No+Poster";
+  data.forEach(m => {
+    const poster = m.poster || "https://via.placeholder.com/300x450";
 
     container.innerHTML += `
       <div class="card">
         <img src="${poster}">
-        
         <div class="info">
-          <div class="title">${m.title || "No Title"}</div>
-          <div class="rating">⭐ ${m.rating || "N/A"}</div>
+          <div class="title">${m.title}</div>
+          <div>⭐ ${m.rating}</div>
 
-          <a href="${m.link}" target="_blank" class="btn">▶ Play</a>
-          <button class="btn" onclick="playTrailer('${m.trailer}')">🎬 Trailer</button>
+          <a href="${m.link}" target="_blank" class="btn">Play</a>
+          <button class="btn" onclick="playTrailer('${m.trailer}')">Trailer</button>
         </div>
-
       </div>
     `;
   });
 }
 
-// SEARCH
-document.getElementById("search").addEventListener("input", function() {
-  const val = this.value.toLowerCase();
-
-  const filtered = allMovies.filter(m =>
-    m.title && m.title.toLowerCase().includes(val)
-  );
-
-  displayMovies(filtered);
-});
-
-// CATEGORY
-function filterCat(cat, el) {
-  let filtered = allMovies;
-
-  if (cat !== "All") {
-    filtered = allMovies.filter(m => m.category === cat);
-  }
-
-  displayMovies(filtered);
-
-  document.querySelectorAll(".categories button")
-    .forEach(btn => btn.classList.remove("active"));
-
-  el.classList.add("active");
-}
-
-// TRAILER
 function playTrailer(url) {
-  if (!url) {
+  if (!url || url === "undefined") {
     alert("Trailer not available");
     return;
   }
@@ -224,7 +128,6 @@ function closeModal() {
   document.getElementById("trailer").src = "";
 }
 
-// INIT
 loadMovies();
 </script>
 
