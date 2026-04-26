@@ -7,111 +7,114 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ MongoDB
+// MongoDB
 mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("MongoDB Connected"))
 .catch(err => console.log(err));
 
-// ✅ Schema
+// Schema
 const Movie = mongoose.model("Movie", {
   title: String,
   link: String,
   poster: String,
+  trailer: String,
   category: String,
   rating: String,
   createdAt: { type: Date, default: Date.now }
 });
 
-// ✅ Routes
-app.get('/', (req, res) => {
-  res.send("Backend Working 🚀");
-});
-
-// GET movies
+// Get movies
 app.get('/api/movies', async (req, res) => {
   const movies = await Movie.find().sort({ createdAt: -1 });
   res.json(movies);
 });
 
-// ADD movie manually (admin panel)
-app.post('/api/add-movie', async (req, res) => {
-  try {
-    const { title, link, poster, category, rating } = req.body;
-
-    await Movie.create({ title, link, poster, category, rating });
-
-    res.json({ success: true });
-  } catch {
-    res.json({ success: false });
-  }
-});
-
-// DELETE all movies
-app.delete('/api/delete-all', async (req, res) => {
+// Delete all
+app.get('/api/delete-all', async (req, res) => {
   await Movie.deleteMany({});
-  res.json({ message: "All movies deleted ✅" });
+  res.send("All movies deleted");
 });
 
-// ✅ TELEGRAM WEBHOOK (IMPROVED)
+// 🔥 TELEGRAM WEBHOOK (FINAL FIXED)
 app.post('/webhook', async (req, res) => {
   try {
     const message = req.body.channel_post || req.body.message;
 
     if (message && message.text) {
 
-      let text = message.text;
+      let original = message.text;
 
-      // 🔥 CLEAN TITLE
-      text = text
+      let title = original
         .replace(/full movie/gi, "")
         .replace(/download/gi, "")
-        .replace(/hindi/gi, "")
-        .replace(/tamil/gi, "")
-        .replace(/hd/gi, "")
         .replace(/\./g, " ")
         .trim();
 
-      let poster = "";
-      let rating = "N/A";
-
-      try {
-        const response = await axios.get(
-          `https://www.omdbapi.com/?t=${encodeURIComponent(text)}&apikey=eee94f23`
-        );
-
-        if (response.data && response.data.Response === "True") {
-          poster = response.data.Poster !== "N/A" ? response.data.Poster : "";
-          rating = response.data.imdbRating;
-        }
-      } catch (err) {
-        console.log("OMDB error:", err.message);
+      if (!title || title.length < 2) {
+        title = original;
       }
 
-      let category = "Other";
-      const lower = text.toLowerCase();
+      console.log("Title:", title);
 
-      if (lower.includes("hindi")) category = "Hindi";
-      else if (lower.includes("tamil")) category = "Tamil";
-      else if (lower.includes("bengali")) category = "Bengali";
+      let poster = "";
+      let rating = "N/A";
+      let trailer = "";
+
+      // 🎬 TMDB
+      try {
+        const tmdb = await axios.get(
+          `https://api.themoviedb.org/3/search/movie?api_key=${process.env.TMDB_KEY}&query=${encodeURIComponent(title)}`
+        );
+
+        if (tmdb.data.results.length > 0) {
+          const movie = tmdb.data.results[0];
+
+          poster = movie.poster_path
+            ? `https://image.tmdb.org/t/p/w500${movie.poster_path}`
+            : "";
+
+          rating = movie.vote_average;
+        }
+      } catch (err) {
+        console.log("TMDB error:", err.message);
+      }
+
+      // ▶️ YOUTUBE (FINAL WORKING)
+      try {
+        const yt = await axios.get(
+          `https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(title + " official trailer")}&key=${process.env.YOUTUBE_KEY}&type=video&maxResults=1`
+        );
+
+        if (yt.data.items && yt.data.items.length > 0) {
+          const videoId = yt.data.items[0].id.videoId;
+
+          if (videoId) {
+            trailer = `https://www.youtube.com/embed/${videoId}`;
+          }
+        }
+      } catch (err) {
+        console.log("YouTube error:", err.message);
+      }
 
       await Movie.create({
-        title: text,
+        title,
         link: "https://t.me/moviesurequired",
         poster,
-        category,
+        trailer,
+        category: "Other",
         rating
       });
 
-      console.log("Saved:", text);
+      console.log("Saved:", title);
     }
 
     res.sendStatus(200);
   } catch (err) {
-    console.log("Webhook Error:", err);
+    console.log(err);
     res.sendStatus(500);
   }
 });
 
-// START
+// Start
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log("Server running on " + PORT));
