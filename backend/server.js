@@ -1,112 +1,122 @@
+require("dotenv").config();
+
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
+const multer = require("multer");
 const axios = require("axios");
+const cloudinary = require("cloudinary").v2;
 const path = require("path");
 
 const app = express();
-app.use(express.json());
+
 app.use(cors());
+app.use(express.json());
+app.use(express.static("public"));
 
-// ENV
-const MONGO_URL = process.env.MONGO_URL;
-const TMDB_KEY = process.env.TMDB_KEY;
+// ===== MongoDB =====
+mongoose.connect(process.env.MONGO_URI)
+.then(()=>console.log("MongoDB Connected"))
+.catch(err=>console.log(err));
 
-// CONNECT DB
-mongoose.connect(MONGO_URL)
-.then(() => console.log("MongoDB Connected"))
-.catch(err => console.log(err));
-
-// MODEL
-const MovieSchema = new mongoose.Schema({
+// ===== Model =====
+const Movie = mongoose.model("Movie", {
   title: String,
   link: String,
   poster: String,
   trailer: String,
   category: String,
-  rating: String
-}, { timestamps: true });
-
-const Movie = mongoose.model("Movie", MovieSchema);
-
-// GET ALL MOVIES
-app.get("/api/movies", async (req, res) => {
-  const movies = await Movie.find().sort({ createdAt: -1 });
-  res.json(movies);
 });
 
-// ADD MOVIE (AUTO POSTER FROM TMDB)
-app.post("/api/movies", async (req, res) => {
+// ===== Cloudinary =====
+cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
+// ===== Upload =====
+const upload = multer({ dest: "uploads/" });
+
+// ===== TMDB helper =====
+async function getMovieData(title) {
   try {
-    const { title, link, category } = req.body;
+    const res = await axios.get(
+      `https://api.themoviedb.org/3/search/movie?api_key=${process.env.TMDB_KEY}&query=${title}`
+    );
 
-    let poster = "";
-    let trailer = "";
+    const movie = res.data.results[0];
 
-    if (TMDB_KEY) {
-      const tmdb = await axios.get(
-        "https://api.themoviedb.org/3/search/movie",
-        {
-          params: {
-            api_key: TMDB_KEY,
-            query: title
-          }
-        }
-      );
+    if (!movie) return {};
 
-      if (tmdb.data.results.length > 0) {
-        const movie = tmdb.data.results[0];
+    return {
+      poster: "https://image.tmdb.org/t/p/w500" + movie.poster_path,
+      trailer: `https://www.youtube.com/embed?search_query=${title} trailer`
+    };
 
-        poster = "https://image.tmdb.org/t/p/w500" + movie.poster_path;
+  } catch {
+    return {};
+  }
+}
 
-        // Trailer
-        const videos = await axios.get(
-          `https://api.themoviedb.org/3/movie/${movie.id}/videos`,
-          {
-            params: { api_key: TMDB_KEY }
-          }
-        );
+// ===== Upload API =====
+app.post("/api/upload", upload.single("video"), async (req, res) => {
+  try {
+    const { title, category } = req.body;
 
-        const trailerData = videos.data.results.find(
-          v => v.type === "Trailer"
-        );
+    let videoUrl = "";
 
-        if (trailerData) {
-          trailer = `https://www.youtube.com/embed/${trailerData.key}`;
-        }
-      }
+    if (req.file) {
+      const result = await cloudinary.uploader.upload(req.file.path, {
+        resource_type: "video",
+      });
+      videoUrl = result.secure_url;
     }
 
-    const newMovie = new Movie({
+    const extra = await getMovieData(title);
+
+    const movie = new Movie({
       title,
-      link,
-      poster,
-      trailer,
       category,
-      rating: "N/A"
+      link: videoUrl,
+      poster: extra.poster || "",
+      trailer: extra.trailer || ""
     });
 
-    await newMovie.save();
-    res.json(newMovie);
+    await movie.save();
+
+    res.json({ success: true });
 
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.log(err);
+    res.json({ success: false });
   }
 });
 
-// DELETE ALL MOVIES
-app.delete("/api/movies", async (req, res) => {
+// ===== Get movies =====
+app.get("/api/movies", async (req, res) => {
+  const movies = await Movie.find().sort({ _id: -1 });
+  res.json(movies);
+});
+
+// ===== Delete all =====
+app.delete("/api/delete-all", async (req, res) => {
   await Movie.deleteMany({});
-  res.json({ message: "All movies deleted" });
+  res.json({ success: true });
 });
 
-// SERVE FRONTEND
-app.use(express.static(path.join(__dirname, "../")));
-
+// ===== Pages =====
 app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../index.html"));
+  res.sendFile(path.join(__dirname, "../public/index.html"));
 });
 
-// START SERVER
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log("Server running on port", PORT));
+app.get("/admin", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public/admin.html"));
+});
+
+app.get("/watch", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public/player.html"));
+});
+
+// ===== Start =====
+app.listen(5000, () => console.log("Server running"));
