@@ -1,41 +1,65 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Admin</title>
+  <title>Admin Panel</title>
 </head>
 <body>
 
-<h2>Add Movie</h2>
+<h2>Admin Login</h2>
 
-<input id="title" placeholder="Title"><br><br>
-<input id="video" placeholder="Video Link"><br><br>
-<input id="poster" placeholder="Poster URL"><br><br>
+<div id="login">
+  <input id="user" placeholder="Username"><br><br>
+  <input id="pass" type="password" placeholder="Password"><br><br>
+  <button onclick="login()">Login</button>
+</div>
 
-<select id="category">
-  <option>Hindi</option>
-  <option>Tamil</option>
-  <option>Bengali</option>
-</select><br><br>
+<div id="panel" style="display:none;">
+  <h2>Upload Movie</h2>
 
-<button onclick="add()">Add Movie</button>
+  <form id="uploadForm">
+    <input name="title" placeholder="Title"><br><br>
+    <input name="category" placeholder="Category"><br><br>
+    Poster: <input type="file" name="poster"><br><br>
+    Video: <input type="file" name="video"><br><br>
+    <button>Upload</button>
+  </form>
+</div>
 
 <script>
 const API = "https://movies-dunia-1.onrender.com";
 
-async function add() {
-  await fetch(API + "/api/add", {
+async function login() {
+  const res = await fetch(API + "/admin/login", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: {"Content-Type": "application/json"},
     body: JSON.stringify({
-      title: title.value,
-      video: video.value,
-      poster: poster.value,
-      category: category.value
+      username: document.getElementById("user").value,
+      password: document.getElementById("pass").value
     })
   });
 
-  alert("Movie Added");
+  const data = await res.json();
+
+  if (data.success) {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("panel").style.display = "block";
+  } else {
+    alert("Wrong login");
+  }
 }
+
+document.getElementById("uploadForm").onsubmit = async (e) => {
+  e.preventDefault();
+
+  const formData = new FormData(e.target);
+
+  await fetch(API + "/admin/upload", {
+    method: "POST",
+    body: formData
+  });
+
+  alert("Uploaded!");
+};
 </script>
 
 </body>
