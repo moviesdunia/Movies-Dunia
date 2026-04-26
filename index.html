@@ -8,18 +8,45 @@
 <style>
 body {
   margin: 0;
-  font-family: Arial, sans-serif;
+  font-family: Arial;
   background: #141414;
   color: white;
 }
 
 header {
-  background: #000;
+  background: black;
   padding: 15px;
   font-size: 24px;
-  font-weight: bold;
   color: red;
   text-align: center;
+}
+
+/* Trending Row */
+.trending {
+  padding: 10px;
+}
+
+.trending h2 {
+  margin-left: 10px;
+}
+
+.trending-row {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding: 10px;
+}
+
+.trending-card {
+  min-width: 140px;
+  cursor: pointer;
+}
+
+.trending-card img {
+  width: 100%;
+  height: 200px;
+  border-radius: 8px;
+  object-fit: cover;
 }
 
 /* Search */
@@ -30,13 +57,12 @@ header {
 
 input {
   width: 90%;
-  padding: 12px;
+  padding: 10px;
   border-radius: 5px;
   border: none;
-  outline: none;
 }
 
-/* Category Buttons */
+/* Categories */
 .categories {
   display: flex;
   gap: 10px;
@@ -46,40 +72,32 @@ input {
 
 .categories button {
   padding: 8px 15px;
-  border: none;
   border-radius: 20px;
+  border: none;
   background: #333;
   color: white;
-  cursor: pointer;
 }
 
-.categories button.active {
+.categories .active {
   background: red;
 }
 
 /* Grid */
 .movies {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(150px,1fr));
   gap: 15px;
   padding: 15px;
 }
 
-/* Card */
 .card {
   position: relative;
   cursor: pointer;
-  transition: transform 0.3s;
-}
-
-.card:hover {
-  transform: scale(1.05);
 }
 
 .card img {
   width: 100%;
   height: 220px;
-  object-fit: cover;
   border-radius: 8px;
 }
 
@@ -90,34 +108,8 @@ input {
   width: 100%;
   padding: 10px;
   background: linear-gradient(transparent, black);
-  border-radius: 8px;
 }
 
-.title {
-  font-size: 14px;
-  font-weight: bold;
-}
-
-.rating {
-  font-size: 12px;
-  color: gold;
-}
-
-/* Play button */
-.play {
-  position: absolute;
-  top: 40%;
-  left: 40%;
-  font-size: 30px;
-  background: rgba(0,0,0,0.6);
-  padding: 10px;
-  border-radius: 50%;
-  display: none;
-}
-
-.card:hover .play {
-  display: block;
-}
 </style>
 </head>
 
@@ -125,11 +117,16 @@ input {
 
 <header>🎬 Movies Dunia</header>
 
+<!-- 🔥 Trending -->
+<div class="trending">
+  <h2>🔥 Trending Now</h2>
+  <div class="trending-row" id="trending"></div>
+</div>
+
 <div class="search-box">
   <input type="text" id="search" placeholder="Search movies...">
 </div>
 
-<!-- 🎯 Category Filter -->
 <div class="categories">
   <button onclick="filterCategory('All')" class="active">All</button>
   <button onclick="filterCategory('Hindi')">Hindi</button>
@@ -148,27 +145,41 @@ let currentCategory = "All";
 async function loadMovies() {
   const res = await fetch(API);
   const data = await res.json();
+
   allMovies = data;
+
+  displayTrending(data.slice(0, 10)); // latest 10
   displayMovies(data);
 }
 
+/* 🔥 Trending */
+function displayTrending(movies) {
+  const container = document.getElementById("trending");
+  container.innerHTML = "";
+
+  movies.forEach(movie => {
+    const poster = movie.poster || "https://via.placeholder.com/300x450";
+
+    container.innerHTML += `
+      <div class="trending-card" onclick="openMovie('${movie.link}')">
+        <img src="${poster}">
+      </div>
+    `;
+  });
+}
+
+/* 🎬 Grid */
 function displayMovies(movies) {
   const container = document.getElementById("movies");
   container.innerHTML = "";
 
   movies.forEach(movie => {
-    const poster = movie.poster && movie.poster !== "N/A"
-      ? movie.poster
-      : "https://via.placeholder.com/300x450?text=No+Image";
+    const poster = movie.poster || "https://via.placeholder.com/300x450";
 
     container.innerHTML += `
       <div class="card" onclick="openMovie('${movie.link}')">
         <img src="${poster}">
-        <div class="play">▶</div>
-        <div class="overlay">
-          <div class="title">${movie.title}</div>
-          <div class="rating">⭐ ${movie.rating || "N/A"}</div>
-        </div>
+        <div class="overlay">${movie.title}</div>
       </div>
     `;
   });
@@ -178,33 +189,28 @@ function openMovie(link) {
   window.open(link, "_blank");
 }
 
-/* 🔍 Search */
-document.getElementById("search").addEventListener("input", function() {
-  applyFilters();
-});
-
-/* 🎯 Category Filter */
+/* Filters */
 function filterCategory(category) {
   currentCategory = category;
 
-  // Highlight active button
-  document.querySelectorAll(".categories button").forEach(btn => {
-    btn.classList.remove("active");
-  });
+  document.querySelectorAll(".categories button")
+    .forEach(btn => btn.classList.remove("active"));
 
   event.target.classList.add("active");
 
   applyFilters();
 }
 
-/* 🔥 Apply both search + category */
-function applyFilters() {
-  const searchValue = document.getElementById("search").value.toLowerCase();
+document.getElementById("search").addEventListener("input", applyFilters);
 
-  let filtered = allMovies.filter(movie => {
-    const matchSearch = movie.title.toLowerCase().includes(searchValue);
-    const matchCategory = currentCategory === "All" || movie.category === currentCategory;
-    return matchSearch && matchCategory;
+function applyFilters() {
+  const value = document.getElementById("search").value.toLowerCase();
+
+  const filtered = allMovies.filter(movie => {
+    return (
+      (currentCategory === "All" || movie.category === currentCategory) &&
+      movie.title.toLowerCase().includes(value)
+    );
   });
 
   displayMovies(filtered);
