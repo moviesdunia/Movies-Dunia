@@ -2,67 +2,42 @@
 <html>
 <head>
   <title>Admin</title>
-  <style>
-    body {
-      background: black;
-      color: white;
-      font-family: Arial;
-    }
-    h1 { color: red; }
-
-    input {
-      display: block;
-      width: 300px;
-      margin: 10px 0;
-      padding: 10px;
-    }
-
-    button {
-      padding: 10px;
-      margin: 5px;
-      cursor: pointer;
-    }
-  </style>
 </head>
 <body>
 
-<h1>Movies Dunia Admin</h1>
+<h2>Add Movie</h2>
 
-<input id="title" placeholder="Movie Title">
-<input id="link" placeholder="Movie Link">
-<input id="category" placeholder="Category">
+<input id="title" placeholder="Title"><br><br>
+<input id="video" placeholder="Video URL (.mp4)"><br><br>
+<input id="poster" placeholder="Poster URL"><br><br>
+<input id="category" placeholder="Category"><br><br>
+<input id="language" placeholder="Language"><br><br>
 
-<button onclick="upload()">Upload Movie</button>
-<button onclick="deleteAll()">Delete All</button>
-
-<p id="status"></p>
+<button onclick="uploadMovie()">Upload</button>
 
 <script>
-async function upload() {
-  const title = document.getElementById("title").value;
-  const link = document.getElementById("link").value;
-  const category = document.getElementById("category").value;
+async function uploadMovie() {
+  const title = document.getElementById('title').value;
+  const videoUrl = document.getElementById('video').value;
+  const poster = document.getElementById('poster').value;
+  const category = document.getElementById('category').value;
+  const language = document.getElementById('language').value;
 
-  document.getElementById("status").innerText = "Uploading...";
+  await fetch('/api/movies', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      title,
+      videoUrl,
+      poster,
+      category,
+      language
+    })
+  });
 
-  try {
-    const res = await fetch("/api/movies", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, link, category })
-    });
-
-    const data = await res.json();
-    document.getElementById("status").innerText = data.message;
-
-  } catch (err) {
-    document.getElementById("status").innerText = "Upload Failed!";
-  }
-}
-
-async function deleteAll() {
-  await fetch("/api/movies", { method: "DELETE" });
-  alert("All movies deleted");
+  alert('Movie Uploaded!');
 }
 </script>
 
