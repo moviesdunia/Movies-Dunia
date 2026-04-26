@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Admin Panel</title>
+  <style>
+    body {
+      font-family: Arial;
+      background: #111;
+      color: white;
+      padding: 20px;
+    }
+
+    input, select {
+      display: block;
+      margin: 10px 0;
+      padding: 10px;
+      width: 100%;
+    }
+
+    button {
+      padding: 10px;
+      background: red;
+      color: white;
+      border: none;
+    }
+  </style>
+</head>
+
+<body>
+
+<h2>🎬 Add Movie</h2>
+
+<input id="title" placeholder="Movie Title">
+<input id="link" placeholder="Telegram Link">
+<input id="poster" placeholder="Poster URL">
+<input id="rating" placeholder="Rating">
+
+<select id="category">
+  <option>Hindi</option>
+  <option>Tamil</option>
+  <option>Bengali</option>
+  <option>Other</option>
+</select>
+
+<button onclick="addMovie()">Add Movie</button>
+
+<script>
+async function addMovie() {
+  const data = {
+    title: document.getElementById("title").value,
+    link: document.getElementById("link").value,
+    poster: document.getElementById("poster").value,
+    rating: document.getElementById("rating").value,
+    category: document.getElementById("category").value
+  };
+
+  const res = await fetch("https://movies-dunia-1.onrender.com/api/add-movie", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify(data)
+  });
+
+  const result = await res.json();
+
+  if (result.success) {
+    alert("Movie Added ✅");
+  } else {
+    alert("Error ❌");
+  }
+}
+</script>
+
+</body>
+</html>
