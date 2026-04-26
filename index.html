@@ -1,122 +1,133 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Movies Dunia</title>
+  <title>Movies Dunia OTT</title>
 
-<style>
-body {
-  margin: 0;
-  font-family: Arial;
-  background: #111;
-  color: white;
-}
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: white;
+      font-family: Arial;
+    }
 
-h1 {
-  text-align: center;
-  color: red;
-}
+    h1 {
+      padding: 10px;
+    }
 
-.grid {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-}
+    h2 {
+      margin-left: 10px;
+    }
 
-.card {
-  width: 150px;
-  margin: 10px;
-  cursor: pointer;
-}
+    .row {
+      display: flex;
+      overflow-x: auto;
+      gap: 10px;
+      padding: 10px;
+    }
 
-.card img {
-  width: 100%;
-  border-radius: 10px;
-}
+    .card {
+      min-width: 200px;
+      transition: transform 0.3s;
+    }
 
-.card p {
-  text-align: center;
-}
+    .card:hover {
+      transform: scale(1.1);
+    }
 
-/* 🎬 Player */
-.player {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: black;
-  z-index: 999;
-}
+    .card img {
+      width: 100%;
+      border-radius: 10px;
+      cursor: pointer;
+    }
 
-.player iframe,
-.player video {
-  width: 100%;
-  height: 100%;
-}
+    #playerModal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      display: none;
+      justify-content: center;
+      align-items: center;
+    }
 
-.close {
-  position: absolute;
-  top: 10px;
-  right: 20px;
-  font-size: 25px;
-  cursor: pointer;
-}
-</style>
+    video {
+      width: 80%;
+      max-height: 80%;
+    }
+
+    .close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 30px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 
 <body>
 
 <h1>🎬 Movies Dunia</h1>
 
-<div class="grid" id="movies"></div>
+<h2>Trending</h2>
+<div class="row" id="trending"></div>
 
-<div id="player"></div>
+<h2>Latest</h2>
+<div class="row" id="latest"></div>
+
+<!-- PLAYER -->
+<div id="playerModal">
+  <span class="close" onclick="closePlayer()">❌</span>
+  <video id="player" controls autoplay></video>
+</div>
 
 <script>
-const API = "https://movies-dunia-1.onrender.com"; // 🔥 change if needed
+const API = "https://movies-dunia-1.onrender.com/videos";
 
-async function loadMovies() {
-  const res = await fetch(API + "/api/movies");
-  const data = await res.json();
+fetch(API)
+  .then(res => res.json())
+  .then(data => {
+    const trending = document.getElementById("trending");
+    const latest = document.getElementById("latest");
 
-  const container = document.getElementById("movies");
-  container.innerHTML = "";
+    data.forEach((video, index) => {
 
-  data.forEach(m => {
-    container.innerHTML += `
-      <div class="card" onclick="play('${m.video}')">
-        <img src="${m.poster || 'https://via.placeholder.com/300'}">
-        <p>${m.title}</p>
-      </div>
-    `;
+      // 🎯 Generate thumbnail from Cloudinary
+      const thumbnail = `https://res.cloudinary.com/dsfklevtl/video/upload/so_1/${video.public_id}.jpg`;
+
+      const card = `
+        <div class="card">
+          <img src="${thumbnail}" onclick="play('${video.secure_url}')">
+        </div>
+      `;
+
+      if (index % 2 === 0) {
+        trending.innerHTML += card;
+      } else {
+        latest.innerHTML += card;
+      }
+    });
   });
-}
 
-function play(link) {
-  let playerHTML = "";
+function play(url) {
+  const modal = document.getElementById("playerModal");
+  const player = document.getElementById("player");
 
-  // 🎬 YouTube
-  if (link.includes("youtube")) {
-    playerHTML = `<iframe src="${link}" frameborder="0" allowfullscreen></iframe>`;
-  }
-  // 🎬 Direct video
-  else {
-    playerHTML = `<video src="${link}" controls autoplay></video>`;
-  }
-
-  document.getElementById("player").innerHTML = `
-    <div class="player">
-      <span class="close" onclick="closePlayer()">✖</span>
-      ${playerHTML}
-    </div>
-  `;
+  modal.style.display = "flex";
+  player.src = url;
+  player.play();
 }
 
 function closePlayer() {
-  document.getElementById("player").innerHTML = "";
-}
+  const modal = document.getElementById("playerModal");
+  const player = document.getElementById("player");
 
-loadMovies();
+  modal.style.display = "none";
+  player.pause();
+}
 </script>
 
 </body>
