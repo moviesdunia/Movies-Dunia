@@ -204,7 +204,7 @@ function playMovie() {
 
 async function openTrailer() {
   const query = current.title + " trailer";
-  const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&key=YOUR_API_KEY`);
+  const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&key=AIzaSyByI7xKCDQfZbSs2-DaX3G2OdVHDuI0zI8`);
   const data = await res.json();
 
   if (data.items && data.items.length) {
