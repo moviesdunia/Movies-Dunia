@@ -1,89 +1,107 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Movies Dunia</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8">
+<title>Movies Dunia</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    body {
-      font-family: Arial;
-      background: #0f0f0f;
-      color: white;
-      margin: 0;
-    }
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #141414;
+  color: white;
+}
 
-    header {
-      background: #111;
-      padding: 15px;
-      text-align: center;
-      font-size: 24px;
-      font-weight: bold;
-      color: #00ffcc;
-    }
+/* Header */
+header {
+  background: #000;
+  padding: 15px;
+  font-size: 24px;
+  font-weight: bold;
+  color: red;
+  text-align: center;
+}
 
-    .search-box {
-      padding: 10px;
-      text-align: center;
-    }
+/* Search */
+.search-box {
+  padding: 10px;
+  text-align: center;
+}
 
-    input {
-      width: 90%;
-      padding: 10px;
-      border-radius: 5px;
-      border: none;
-      outline: none;
-    }
+input {
+  width: 90%;
+  padding: 12px;
+  border-radius: 5px;
+  border: none;
+  outline: none;
+}
 
-    .movies {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 12px;
-      padding: 10px;
-    }
+/* Grid */
+.movies {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  padding: 15px;
+}
 
-    .card {
-      background: #1c1c1c;
-      padding: 10px;
-      border-radius: 10px;
-      transition: 0.3s;
-    }
+/* Card */
+.card {
+  position: relative;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
 
-    .card:hover {
-      transform: scale(1.03);
-    }
+.card:hover {
+  transform: scale(1.05);
+}
 
-    .card img {
-      width: 100%;
-      border-radius: 10px;
-      margin-bottom: 8px;
-    }
+/* Poster */
+.card img {
+  width: 100%;
+  height: 220px;
+  object-fit: cover;
+  border-radius: 8px;
+}
 
-    .card h3 {
-      font-size: 15px;
-      margin: 5px 0;
-    }
+/* Overlay */
+.overlay {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  padding: 10px;
+  background: linear-gradient(transparent, black);
+  border-radius: 8px;
+}
 
-    .rating {
-      font-size: 13px;
-      color: #ccc;
-    }
+/* Title */
+.title {
+  font-size: 14px;
+  font-weight: bold;
+}
 
-    .btn {
-      display: inline-block;
-      margin-top: 8px;
-      padding: 6px 12px;
-      background: #00ffcc;
-      color: black;
-      text-decoration: none;
-      border-radius: 5px;
-      font-weight: bold;
-    }
+/* Rating */
+.rating {
+  font-size: 12px;
+  color: gold;
+}
 
-    .btn:hover {
-      background: #00ddb3;
-    }
-  </style>
+/* Play Button */
+.play {
+  position: absolute;
+  top: 40%;
+  left: 40%;
+  font-size: 30px;
+  background: rgba(0,0,0,0.6);
+  padding: 10px;
+  border-radius: 50%;
+  display: none;
+}
+
+.card:hover .play {
+  display: block;
+}
+</style>
 </head>
 
 <body>
@@ -102,14 +120,10 @@ const API = "https://movies-dunia-1.onrender.com/api/movies";
 let allMovies = [];
 
 async function loadMovies() {
-  try {
-    const res = await fetch(API);
-    const data = await res.json();
-    allMovies = data;
-    displayMovies(data);
-  } catch (err) {
-    console.log("Error loading movies:", err);
-  }
+  const res = await fetch(API);
+  const data = await res.json();
+  allMovies = data;
+  displayMovies(data);
 }
 
 function displayMovies(movies) {
@@ -117,25 +131,30 @@ function displayMovies(movies) {
   container.innerHTML = "";
 
   movies.forEach(movie => {
+    const poster = movie.poster && movie.poster !== "N/A"
+      ? movie.poster
+      : "https://via.placeholder.com/300x450?text=No+Image";
+
     container.innerHTML += `
-      <div class="card">
+      <div class="card" onclick="openMovie('${movie.link}')">
+        <img src="${poster}">
         
-        <img 
-          src="${movie.poster || 'https://dummyimage.com/300x450/000/fff&text=No+Poster'}" 
-          alt="${movie.title}"
-        />
+        <div class="play">▶</div>
 
-        <h3>${movie.title}</h3>
-
-        <div class="rating">⭐ ${movie.rating || "N/A"}</div>
-
-        <a href="${movie.link}" target="_blank" class="btn">Watch</a>
+        <div class="overlay">
+          <div class="title">${movie.title}</div>
+          <div class="rating">⭐ ${movie.rating || "N/A"}</div>
+        </div>
       </div>
     `;
   });
 }
 
-// 🔍 Search functionality
+function openMovie(link) {
+  window.open(link, "_blank");
+}
+
+// 🔍 Search
 document.getElementById("search").addEventListener("input", function() {
   const value = this.value.toLowerCase();
 
