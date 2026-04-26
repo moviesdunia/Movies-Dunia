@@ -1,38 +1,109 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Admin Panel</title>
+<title>Admin Panel</title>
+
+<style>
+body {
+  background: #111;
+  color: white;
+  font-family: Arial;
+  padding: 20px;
+}
+
+h1 {
+  color: red;
+}
+
+input, select {
+  padding: 10px;
+  margin: 5px 0;
+  width: 100%;
+  border-radius: 5px;
+  border: none;
+}
+
+button {
+  padding: 10px;
+  margin-top: 10px;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.upload {
+  background: red;
+  color: white;
+}
+
+.delete {
+  background: black;
+  color: red;
+  border: 1px solid red;
+}
+
+.status {
+  margin-top: 10px;
+  color: lightgreen;
+}
+</style>
 </head>
+
 <body>
 
-<h2>Upload Movie</h2>
+<h1>🎬 Movies Dunia Admin</h1>
 
-<input id="title" placeholder="Movie Title"><br><br>
-<input id="link" placeholder="Movie Link"><br><br>
-<input id="category" placeholder="Category"><br><br>
+<input id="title" placeholder="Movie Title">
+<input id="link" placeholder="Movie Link (Telegram / Video)">
+<input id="category" placeholder="Category (Action / Hindi / Tamil)">
 
-<button onclick="upload()">Upload</button>
-<button onclick="deleteAll()">Delete All</button>
+<button class="upload" onclick="uploadMovie()">Upload Movie</button>
+<button class="delete" onclick="deleteAll()">Delete All Movies</button>
+
+<div class="status" id="status"></div>
 
 <script>
-async function upload() {
+async function uploadMovie() {
   const title = document.getElementById("title").value;
   const link = document.getElementById("link").value;
   const category = document.getElementById("category").value;
 
-  const res = await fetch("/api/movies", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, link, category })
-  });
+  document.getElementById("status").innerText = "Uploading...";
 
-  const data = await res.json();
-  alert("Uploaded!");
+  try {
+    const res = await fetch("/api/add-movie", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ title, link, category })
+    });
+
+    const data = await res.json();
+
+    if (data.success) {
+      document.getElementById("status").innerText = "✅ Uploaded successfully";
+    } else {
+      document.getElementById("status").innerText = "❌ Upload failed";
+    }
+
+  } catch (err) {
+    document.getElementById("status").innerText = "❌ Error uploading";
+    console.error(err);
+  }
 }
 
 async function deleteAll() {
-  await fetch("/api/movies", { method: "DELETE" });
-  alert("All deleted!");
+  if (!confirm("Delete all movies?")) return;
+
+  document.getElementById("status").innerText = "Deleting...";
+
+  try {
+    await fetch("/api/delete-all", { method: "DELETE" });
+    document.getElementById("status").innerText = "🗑 All movies deleted";
+  } catch (err) {
+    document.getElementById("status").innerText = "❌ Error deleting";
+  }
 }
 </script>
 
