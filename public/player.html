@@ -11,9 +11,7 @@
 </a>
 
 <script>
-const p = new URLSearchParams(location.search);
-const url = p.get("video");
-
+const url = new URLSearchParams(location.search).get("video");
 video.src = url;
 download.href = url;
 </script>
