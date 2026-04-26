@@ -1,44 +1,54 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Admin</title>
-</head>
 <body>
 
-<h2>Add Movie</h2>
+<h2>Upload Movie</h2>
 
-<input id="title" placeholder="Title"><br><br>
-<input id="video" placeholder="Video URL (.mp4)"><br><br>
-<input id="poster" placeholder="Poster URL"><br><br>
-<input id="category" placeholder="Category"><br><br>
-<input id="language" placeholder="Language"><br><br>
+<form id="form">
+<input name="title" placeholder="Movie Title" required><br><br>
+<input name="category" placeholder="Category"><br><br>
+<input type="file" name="video" required><br><br>
+<button>Upload</button>
+</form>
 
-<button onclick="uploadMovie()">Upload</button>
+<h2>Movies</h2>
+<div id="list"></div>
 
 <script>
-async function uploadMovie() {
-  const title = document.getElementById('title').value;
-  const videoUrl = document.getElementById('video').value;
-  const poster = document.getElementById('poster').value;
-  const category = document.getElementById('category').value;
-  const language = document.getElementById('language').value;
+form.onsubmit = async (e) => {
+  e.preventDefault();
 
-  await fetch('/api/movies', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify({
-      title,
-      videoUrl,
-      poster,
-      category,
-      language
-    })
+  const fd = new FormData(form);
+
+  await fetch("/api/upload", {
+    method:"POST",
+    body: fd
   });
 
-  alert('Movie Uploaded!');
+  alert("Uploaded!");
+  load();
+};
+
+async function load() {
+  const res = await fetch("/api/movies");
+  const data = await res.json();
+
+  list.innerHTML = "";
+
+  data.forEach(m => {
+    list.innerHTML += `
+      <p>${m.title}
+      <button onclick="del('${m._id}')">Delete</button></p>
+    `;
+  });
 }
+
+async function del(id) {
+  await fetch("/api/movies/"+id, {method:"DELETE"});
+  load();
+}
+
+load();
 </script>
 
 </body>
