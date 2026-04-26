@@ -1,79 +1,154 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Movies Dunia</title>
-  <style>
-    body {
-      margin: 0;
-      background: black;
-      color: white;
-      font-family: Arial;
-    }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Movies Dunia</title>
 
-    header {
-      display: flex;
-      justify-content: space-between;
-      padding: 15px;
-      background: black;
-    }
+<style>
+body {
+  margin: 0;
+  background: #000;
+  color: white;
+  font-family: Arial, sans-serif;
+}
 
-    h1 {
-      color: red;
-    }
+header {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px 20px;
+  background: black;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
 
-    .movies {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 15px;
-      padding: 20px;
-    }
+.logo {
+  color: red;
+  font-size: 24px;
+  font-weight: bold;
+}
 
-    .card {
-      width: 150px;
-      cursor: pointer;
-    }
+.search {
+  padding: 5px;
+  border-radius: 4px;
+  border: none;
+}
 
-    .card img {
-      width: 100%;
-      border-radius: 5px;
-    }
+.hero {
+  height: 300px;
+  background: linear-gradient(to top, black, transparent),
+              url('https://images.unsplash.com/photo-1524985069026-dd778a71c7b4');
+  background-size: cover;
+  display: flex;
+  align-items: flex-end;
+  padding: 20px;
+  font-size: 30px;
+  font-weight: bold;
+}
 
-    .card:hover {
-      transform: scale(1.1);
-    }
-  </style>
+.section {
+  padding: 20px;
+}
+
+.row {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+}
+
+.card {
+  min-width: 150px;
+  cursor: pointer;
+  transition: transform 0.3s;
+}
+
+.card img {
+  width: 100%;
+  border-radius: 6px;
+}
+
+.card:hover {
+  transform: scale(1.1);
+}
+
+.title {
+  font-size: 12px;
+  margin-top: 5px;
+  text-align: center;
+}
+</style>
 </head>
 
 <body>
 
 <header>
-  <h1>Movies Dunia</h1>
+  <div class="logo">Movies Dunia</div>
+  <input type="text" class="search" placeholder="Search..." onkeyup="searchMovies(this.value)">
 </header>
 
-<div class="movies" id="movies"></div>
+<div class="hero" id="heroTitle">
+  Loading...
+</div>
+
+<div class="section">
+  <h2>Trending</h2>
+  <div class="row" id="moviesRow"></div>
+</div>
 
 <script>
+let allMovies = [];
+
+// Fetch movies from backend
 async function loadMovies() {
-  const res = await fetch("/api/movies");
-  const data = await res.json();
+  try {
+    const res = await fetch("/api/movies");
+    const movies = await res.json();
 
-  const container = document.getElementById("movies");
-  container.innerHTML = "";
+    allMovies = movies;
 
-  data.forEach(movie => {
-    container.innerHTML += `
-      <div class="card" onclick="play('${movie.link}')">
-        <img src="${movie.poster || 'https://via.placeholder.com/150'}">
-        <p>${movie.title}</p>
-      </div>
+    if (movies.length > 0) {
+      document.getElementById("heroTitle").innerText = movies[0].title;
+    }
+
+    renderMovies(movies);
+
+  } catch (err) {
+    console.error(err);
+  }
+}
+
+function renderMovies(movies) {
+  const row = document.getElementById("moviesRow");
+  row.innerHTML = "";
+
+  movies.forEach(movie => {
+    const card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+      <img src="${movie.poster || 'https://via.placeholder.com/150'}" />
+      <div class="title">${movie.title}</div>
     `;
+
+    card.onclick = () => {
+      window.open(movie.link, "_blank");
+    };
+
+    row.appendChild(card);
   });
 }
 
-function play(link) {
-  window.open(link, "_blank");
+// Search
+function searchMovies(query) {
+  const filtered = allMovies.filter(m =>
+    m.title.toLowerCase().includes(query.toLowerCase())
+  );
+
+  renderMovies(filtered);
 }
 
+// Load on start
 loadMovies();
 </script>
 
