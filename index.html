@@ -1,59 +1,170 @@
 <!DOCTYPE html>
 <html>
 <head>
-<style>
-body { background:black; color:white; font-family:sans-serif; }
-.row { display:flex; overflow-x:auto; }
-.card { min-width:150px; margin:10px; }
-.card img { width:100%; height:220px; border-radius:6px; }
-</style>
+  <title>Movies Dunia</title>
+
+  <style>
+    body {
+      margin: 0;
+      background: #141414;
+      color: white;
+      font-family: Arial;
+    }
+
+    header {
+      padding: 15px;
+      font-size: 24px;
+      font-weight: bold;
+      background: black;
+    }
+
+    .banner {
+      position: relative;
+      height: 400px;
+      background-size: cover;
+      background-position: center;
+      display: flex;
+      align-items: flex-end;
+      padding: 30px;
+    }
+
+    .banner h1 {
+      font-size: 40px;
+    }
+
+    .row {
+      margin: 20px;
+    }
+
+    .row h2 {
+      margin-bottom: 10px;
+    }
+
+    .movies {
+      display: flex;
+      overflow-x: auto;
+    }
+
+    .movie {
+      margin-right: 10px;
+      transition: transform 0.3s;
+      cursor: pointer;
+    }
+
+    .movie img {
+      width: 150px;
+      border-radius: 5px;
+    }
+
+    .movie:hover {
+      transform: scale(1.2);
+    }
+
+    /* VIDEO MODAL */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0,0,0,0.9);
+      justify-content: center;
+      align-items: center;
+    }
+
+    .modal video {
+      width: 80%;
+      max-height: 80%;
+    }
+
+    .close {
+      position: absolute;
+      top: 20px;
+      right: 30px;
+      font-size: 30px;
+      cursor: pointer;
+    }
+  </style>
 </head>
 
 <body>
 
-<h1>🎬 Movies Dunia</h1>
+<header>🎬 Movies Dunia</header>
 
-<h2>🔥 Trending</h2>
-<div class="row" id="trending"></div>
+<!-- HERO BANNER -->
+<div id="banner" class="banner">
+  <h1 id="bannerTitle"></h1>
+</div>
 
-<h2>🆕 Latest</h2>
-<div class="row" id="latest"></div>
+<!-- MOVIE SECTIONS -->
+<div class="row">
+  <h2>🔥 Trending</h2>
+  <div id="trending" class="movies"></div>
+</div>
 
-<h2>🎭 Hindi</h2>
-<div class="row" id="hindi"></div>
+<div class="row">
+  <h2>🆕 Latest</h2>
+  <div id="latest" class="movies"></div>
+</div>
 
-<video id="player" controls style="width:100%"></video>
+<!-- VIDEO PLAYER -->
+<div id="modal" class="modal">
+  <span class="close" onclick="closeVideo()">✖</span>
+  <video id="player" controls autoplay></video>
+</div>
 
 <script>
-async function load() {
+async function loadMovies() {
   const res = await fetch("/api/movies");
   const movies = await res.json();
 
+  if (movies.length > 0) {
+    // HERO BANNER
+    const banner = document.getElementById("banner");
+    banner.style.backgroundImage = `url(${movies[0].poster})`;
+    document.getElementById("bannerTitle").innerText = movies[0].title;
+  }
+
+  const trending = document.getElementById("trending");
+  const latest = document.getElementById("latest");
+
+  trending.innerHTML = "";
+  latest.innerHTML = "";
+
   movies.forEach(m => {
-    const card = `
-      <div class="card" onclick="play('${m.videoUrl}')">
+    const movieCard = `
+      <div class="movie" onclick="playVideo('${m.videoUrl}')">
         <img src="${m.poster}">
-        <p>${m.title}</p>
       </div>
     `;
 
-    if (m.category === "Trending")
-      trending.innerHTML += card;
-
-    if (m.category === "Latest")
-      latest.innerHTML += card;
-
-    if (m.language === "Hindi")
-      hindi.innerHTML += card;
+    if (m.category === "Trending") {
+      trending.innerHTML += movieCard;
+    } else {
+      latest.innerHTML += movieCard;
+    }
   });
 }
 
-function play(url) {
+function playVideo(url) {
+  const modal = document.getElementById("modal");
+  const player = document.getElementById("player");
+
   player.src = url;
-  player.play();
+  modal.style.display = "flex";
 }
 
-load();
+function closeVideo() {
+  const modal = document.getElementById("modal");
+  const player = document.getElementById("player");
+
+  player.pause();
+  player.src = "";
+  modal.style.display = "none";
+}
+
+loadMovies();
 </script>
 
 </body>
