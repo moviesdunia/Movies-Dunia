@@ -1,54 +1,40 @@
 <!DOCTYPE html>
 <html>
+<head>
+  <title>Admin Upload</title>
+</head>
+
 <body>
 
-<h2>Upload Movie</h2>
+<h1>Upload Movie</h1>
 
-<form id="form">
-<input name="title" placeholder="Movie Title" required><br><br>
-<input name="category" placeholder="Category"><br><br>
-<input type="file" name="video" required><br><br>
-<button>Upload</button>
-</form>
+<input type="text" id="title" placeholder="Title"><br><br>
+<input type="text" id="language" placeholder="Language"><br><br>
+<input type="file" id="video"><br><br>
 
-<h2>Movies</h2>
-<div id="list"></div>
+<button onclick="upload()">Upload</button>
 
 <script>
-form.onsubmit = async (e) => {
-  e.preventDefault();
+const API = "https://movies-dunia-1.onrender.com"; // 👈 SAME URL
 
-  const fd = new FormData(form);
+async function upload() {
+  const title = document.getElementById("title").value;
+  const language = document.getElementById("language").value;
+  const file = document.getElementById("video").files[0];
 
-  await fetch("/api/upload", {
-    method:"POST",
-    body: fd
+  const formData = new FormData();
+  formData.append("title", title);
+  formData.append("language", language);
+  formData.append("video", file);
+
+  const res = await fetch(API + "/api/upload", {
+    method: "POST",
+    body: formData
   });
 
-  alert("Uploaded!");
-  load();
-};
-
-async function load() {
-  const res = await fetch("/api/movies");
   const data = await res.json();
-
-  list.innerHTML = "";
-
-  data.forEach(m => {
-    list.innerHTML += `
-      <p>${m.title}
-      <button onclick="del('${m._id}')">Delete</button></p>
-    `;
-  });
+  alert("Uploaded!");
 }
-
-async function del(id) {
-  await fetch("/api/movies/"+id, {method:"DELETE"});
-  load();
-}
-
-load();
 </script>
 
 </body>
