@@ -6,7 +6,7 @@ const movieSchema = new mongoose.Schema({
   poster: String,
   category: String,
   language: String,
-  overview: String,
+  overview: String
 }, { timestamps: true });
 
 module.exports = mongoose.model("Movie", movieSchema);
