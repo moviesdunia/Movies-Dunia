@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Movies Dunia OTT PRO</title>
+  <title>Movies Dunia OTT</title>
 
   <style>
     body {
@@ -24,8 +24,8 @@
 
     .logo {
       font-size: 22px;
-      font-weight: bold;
       color: red;
+      font-weight: bold;
     }
 
     input {
@@ -45,9 +45,12 @@
 
     .hero h1 {
       font-size: 40px;
+      background: rgba(0,0,0,0.6);
+      padding: 10px;
+      border-radius: 5px;
     }
 
-    /* CATEGORY BUTTONS */
+    /* FILTER */
     .filters {
       padding: 10px;
     }
@@ -55,11 +58,11 @@
     .filters button {
       margin-right: 10px;
       padding: 8px 15px;
-      border: none;
       border-radius: 20px;
-      cursor: pointer;
+      border: none;
       background: #333;
       color: white;
+      cursor: pointer;
     }
 
     .filters button.active {
@@ -95,7 +98,7 @@
       left: 10px;
       font-size: 14px;
       background: rgba(0,0,0,0.7);
-      padding: 4px;
+      padding: 5px;
       border-radius: 4px;
     }
 
@@ -125,7 +128,6 @@
       font-size: 30px;
       cursor: pointer;
     }
-
   </style>
 </head>
 
@@ -134,7 +136,7 @@
 <!-- NAV -->
 <div class="nav">
   <div class="logo">🎬 Movies Dunia</div>
-  <input type="text" id="search" placeholder="Search...">
+  <input type="text" id="search" placeholder="Search movies...">
 </div>
 
 <!-- HERO -->
@@ -163,37 +165,35 @@
 
 <script>
 const API = "https://movies-dunia-1.onrender.com/movies";
-let allVideos = [];
+let allMovies = [];
 
+/* LOAD MOVIES */
 fetch(API)
   .then(res => res.json())
   .then(data => {
-    allVideos = data;
+    allMovies = data;
 
-    // HERO
-    const first = data[0];
-    const heroImg = `https://res.cloudinary.com/dsfklevtl/video/upload/so_1/${first.public_id}.jpg`;
-
-    document.getElementById("hero").style.backgroundImage = `url(${heroImg})`;
-    document.getElementById("heroTitle").innerText = first.public_id;
+    if (data.length > 0) {
+      document.getElementById("hero").style.backgroundImage = `url(${data[0].poster})`;
+      document.getElementById("heroTitle").innerText = data[0].title;
+    }
 
     render(data);
   });
 
-function render(videos) {
+/* RENDER */
+function render(movies) {
   const trending = document.getElementById("trending");
   const latest = document.getElementById("latest");
 
   trending.innerHTML = "";
   latest.innerHTML = "";
 
-  videos.forEach((video, i) => {
-    const thumbnail = `https://res.cloudinary.com/dsfklevtl/video/upload/so_1/${video.public_id}.jpg`;
-
+  movies.forEach((movie, i) => {
     const card = `
-      <div class="card" onclick="play('${video.secure_url}')">
-        <img src="${thumbnail}">
-        <div class="title">${video.public_id}</div>
+      <div class="card" onclick="play('${movie.videoUrl}')">
+        <img src="${movie.poster}">
+        <div class="title">${movie.title}</div>
       </div>
     `;
 
@@ -205,7 +205,11 @@ function render(videos) {
 /* SEARCH */
 document.getElementById("search").addEventListener("input", (e) => {
   const val = e.target.value.toLowerCase();
-  const filtered = allVideos.filter(v => v.public_id.toLowerCase().includes(val));
+
+  const filtered = allMovies.filter(m =>
+    m.title.toLowerCase().includes(val)
+  );
+
   render(filtered);
 });
 
@@ -214,9 +218,12 @@ function filterMovies(type) {
   document.querySelectorAll(".filters button").forEach(btn => btn.classList.remove("active"));
   event.target.classList.add("active");
 
-  if (type === "all") return render(allVideos);
+  if (type === "all") return render(allMovies);
 
-  const filtered = allVideos.filter(v => v.public_id.toLowerCase().includes(type));
+  const filtered = allMovies.filter(m =>
+    m.category.toLowerCase().includes(type)
+  );
+
   render(filtered);
 }
 
