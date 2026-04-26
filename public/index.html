@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Movies Dunia</title>
+
+<style>
+body { background:#111; color:white; font-family:Arial; }
+
+.header {
+  display:flex;
+  justify-content:space-between;
+  padding:10px;
+}
+
+.logo { color:red; font-size:24px; }
+
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fill,150px);
+  gap:15px;
+  padding:20px;
+}
+
+.card img {
+  width:100%;
+  border-radius:10px;
+}
+
+.card:hover { transform:scale(1.1); cursor:pointer; }
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  <div class="logo">Movies Dunia</div>
+</div>
+
+<div class="grid" id="movies"></div>
+
+<script>
+async function loadMovies() {
+  const res = await fetch("/api/movies");
+  const data = await res.json();
+
+  const container = document.getElementById("movies");
+
+  data.forEach(m => {
+    container.innerHTML += `
+      <div class="card" onclick="watch('${m.link}')">
+        <img src="${m.poster || 'https://via.placeholder.com/150'}">
+        <p>${m.title}</p>
+      </div>
+    `;
+  });
+}
+
+function watch(link) {
+  localStorage.setItem("video", link);
+  window.location = "/watch";
+}
+
+loadMovies();
+</script>
+
+</body>
+</html>
