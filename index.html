@@ -13,219 +13,27 @@ body {
   color: white;
 }
 
+/* HEADER */
 header {
-  background: black;
   padding: 15px;
   font-size: 24px;
+  font-weight: bold;
   color: red;
-  text-align: center;
 }
 
-/* Trending */
-.trending-row {
+/* HERO */
+.hero {
+  height: 250px;
+  background: linear-gradient(to top, #141414, transparent),
+              url('https://i.imgur.com/7wYcG5C.jpg') center/cover;
   display: flex;
-  overflow-x: auto;
-  gap: 10px;
-  padding: 10px;
+  align-items: flex-end;
+  padding: 20px;
 }
 
-.trending-card img {
-  width: 140px;
-  height: 200px;
-  border-radius: 8px;
+.hero h1 {
+  font-size: 28px;
 }
 
-/* Search */
-.search-box {
-  text-align: center;
-  padding: 10px;
-}
-
-input {
-  width: 90%;
-  padding: 10px;
-  border-radius: 5px;
-  border: none;
-}
-
-/* Categories */
-.categories {
-  display: flex;
-  gap: 10px;
-  padding: 10px;
-}
-
-.categories button {
-  padding: 8px 15px;
-  border-radius: 20px;
-  border: none;
-  background: #333;
-  color: white;
-}
-
-.categories .active {
-  background: red;
-}
-
-/* Grid */
-.movies {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px,1fr));
-  gap: 10px;
-  padding: 10px;
-}
-
-.card img {
-  width: 100%;
-  height: 220px;
-  border-radius: 8px;
-}
-
-/* 🎥 Popup */
-.popup {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background: rgba(0,0,0,0.9);
-  display: none;
-  justify-content: center;
-  align-items: center;
-}
-
-.popup iframe {
-  width: 90%;
-  height: 50%;
-}
-
-.close {
-  position: absolute;
-  top: 20px;
-  right: 20px;
-  font-size: 30px;
-  cursor: pointer;
-}
-</style>
-</head>
-
-<body>
-
-<header>🎬 Movies Dunia</header>
-
-<h2 style="padding-left:10px;">🔥 Trending</h2>
-<div class="trending-row" id="trending"></div>
-
-<div class="search-box">
-  <input type="text" id="search" placeholder="Search movies...">
-</div>
-
-<div class="categories">
-  <button onclick="filterCategory('All')" class="active">All</button>
-  <button onclick="filterCategory('Hindi')">Hindi</button>
-  <button onclick="filterCategory('Tamil')">Tamil</button>
-  <button onclick="filterCategory('Bengali')">Bengali</button>
-</div>
-
-<div class="movies" id="movies"></div>
-
-<!-- 🎥 Trailer Popup -->
-<div class="popup" id="popup">
-  <span class="close" onclick="closePopup()">✖</span>
-  <iframe id="trailer" src="" frameborder="0" allowfullscreen></iframe>
-</div>
-
-<script>
-const API = "https://movies-dunia-1.onrender.com/api/movies";
-
-let allMovies = [];
-let currentCategory = "All";
-
-async function loadMovies() {
-  const res = await fetch(API);
-  const data = await res.json();
-
-  allMovies = data;
-
-  displayTrending(data.slice(0, 10));
-  displayMovies(data);
-}
-
-function displayTrending(movies) {
-  const container = document.getElementById("trending");
-  container.innerHTML = "";
-
-  movies.forEach(movie => {
-    const poster = movie.poster || "https://via.placeholder.com/300x450";
-
-    container.innerHTML += `
-      <div class="trending-card" onclick="playTrailer('${movie.title}')">
-        <img src="${poster}">
-      </div>
-    `;
-  });
-}
-
-function displayMovies(movies) {
-  const container = document.getElementById("movies");
-  container.innerHTML = "";
-
-  movies.forEach(movie => {
-    const poster = movie.poster || "https://via.placeholder.com/300x450";
-
-    container.innerHTML += `
-      <div class="card" onclick="playTrailer('${movie.title}')">
-        <img src="${poster}">
-      </div>
-    `;
-  });
-}
-
-/* 🎥 PLAY TRAILER */
-function playTrailer(title) {
-  const query = encodeURIComponent(title + " trailer");
-
-  const url = `https://www.youtube.com/embed?listType=search&list=${query}`;
-
-  document.getElementById("trailer").src = url;
-  document.getElementById("popup").style.display = "flex";
-}
-
-/* CLOSE */
-function closePopup() {
-  document.getElementById("popup").style.display = "none";
-  document.getElementById("trailer").src = "";
-}
-
-/* Filters */
-function filterCategory(category) {
-  currentCategory = category;
-
-  document.querySelectorAll(".categories button")
-    .forEach(btn => btn.classList.remove("active"));
-
-  event.target.classList.add("active");
-
-  applyFilters();
-}
-
-document.getElementById("search").addEventListener("input", applyFilters);
-
-function applyFilters() {
-  const value = document.getElementById("search").value.toLowerCase();
-
-  const filtered = allMovies.filter(movie => {
-    return (
-      (currentCategory === "All" || movie.category === currentCategory) &&
-      movie.title.toLowerCase().includes(value)
-    );
-  });
-
-  displayMovies(filtered);
-}
-
-loadMovies();
-</script>
-
-</body>
-</html>
+/* SEARCH */
+.search
