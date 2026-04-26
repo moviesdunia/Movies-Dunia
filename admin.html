@@ -2,6 +2,8 @@
 <html>
 <head>
   <title>Admin Panel</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <style>
     body {
       font-family: Arial;
@@ -10,25 +12,43 @@
       padding: 20px;
     }
 
+    h2 {
+      text-align: center;
+    }
+
     input, select {
       display: block;
       margin: 10px 0;
       padding: 10px;
       width: 100%;
+      border-radius: 5px;
+      border: none;
     }
 
     button {
       padding: 10px;
+      width: 100%;
+      margin-top: 10px;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    .add-btn {
+      background: green;
+      color: white;
+    }
+
+    .delete-btn {
       background: red;
       color: white;
-      border: none;
     }
   </style>
 </head>
 
 <body>
 
-<h2>🎬 Add Movie</h2>
+<h2>🎬 Admin Panel</h2>
 
 <input id="title" placeholder="Movie Title">
 <input id="link" placeholder="Telegram Link">
@@ -42,9 +62,14 @@
   <option>Other</option>
 </select>
 
-<button onclick="addMovie()">Add Movie</button>
+<button class="add-btn" onclick="addMovie()">➕ Add Movie</button>
+
+<button class="delete-btn" onclick="deleteAll()">🗑 Delete All Movies</button>
 
 <script>
+const API = "https://movies-dunia-1.onrender.com";
+
+// ➕ Add Movie
 async function addMovie() {
   const data = {
     title: document.getElementById("title").value,
@@ -54,7 +79,7 @@ async function addMovie() {
     category: document.getElementById("category").value
   };
 
-  const res = await fetch("https://movies-dunia-1.onrender.com/api/add-movie", {
+  const res = await fetch(API + "/api/add-movie", {
     method: "POST",
     headers: {
       "Content-Type": "application/json"
@@ -69,6 +94,20 @@ async function addMovie() {
   } else {
     alert("Error ❌");
   }
+}
+
+// 🗑 Delete All
+async function deleteAll() {
+  const confirmDelete = confirm("Are you sure? This will delete ALL movies!");
+
+  if (!confirmDelete) return;
+
+  const res = await fetch(API + "/api/delete-all", {
+    method: "DELETE"
+  });
+
+  const data = await res.json();
+  alert(data.message);
 }
 </script>
 
