@@ -2,124 +2,117 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Movies Dunia</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Movies Dunia</title>
 
 <style>
 body {
   margin: 0;
   font-family: Arial;
-  background: #f5f5f5;
-  color: #111;
+  background: #141414;
+  color: white;
 }
 
 header {
   padding: 15px;
-  font-size: 24px;
+  font-size: 22px;
   font-weight: bold;
-  color: #e50914;
+  background: black;
+  color: red;
+  text-align: center;
 }
 
-/* HERO */
 .hero {
   height: 300px;
+  background-size: cover;
+  background-position: center;
   display: flex;
   align-items: flex-end;
   padding: 20px;
+}
+
+.hero h1 {
+  margin: 0;
+}
+
+.hero button {
+  margin-top: 10px;
+  padding: 8px 15px;
+  background: red;
+  border: none;
   color: white;
-  background-size: cover;
-  background-position: center;
+  cursor: pointer;
 }
 
-/* SEARCH */
-.search-box {
+.section {
   padding: 10px;
 }
 
-input {
-  width: 100%;
-  padding: 12px;
-  border-radius: 5px;
-  border: 1px solid #ccc;
-}
-
-/* ROWS */
 .row {
-  padding: 10px;
-}
-
-.row h2 {
-  margin-left: 5px;
-}
-
-/* SCROLL */
-.scroll {
   display: flex;
   overflow-x: auto;
-  gap: 10px;
-  padding: 10px 5px;
 }
 
-/* CARD */
 .card {
-  min-width: 140px;
-  border-radius: 10px;
-  overflow: hidden;
-  background: white;
-  transition: 0.3s;
+  min-width: 150px;
+  margin-right: 10px;
+  cursor: pointer;
+  position: relative;
 }
 
 .card img {
   width: 100%;
-  height: 200px;
-  object-fit: cover;
+  border-radius: 5px;
 }
 
-/* HOVER EFFECT */
-.card:hover {
-  transform: scale(1.1);
-}
-
-/* INFO */
-.info {
-  padding: 8px;
-}
-
-.title {
-  font-size: 13px;
-  font-weight: bold;
-}
-
-.rating {
+.card span {
+  position: absolute;
+  bottom: 5px;
+  left: 5px;
   font-size: 12px;
-  margin-bottom: 5px;
 }
 
-/* BUTTONS */
-.btn {
-  background: #e50914;
+.filters {
+  padding: 10px;
+}
+
+.filters button {
+  margin: 5px;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 20px;
+  cursor: pointer;
+}
+
+.active {
+  background: red;
   color: white;
-  padding: 4px 6px;
-  border-radius: 4px;
-  font-size: 11px;
-  text-decoration: none;
-  margin-right: 5px;
 }
 
-/* MODAL */
+.search {
+  padding: 10px;
+}
+
+.search input {
+  width: 95%;
+  padding: 10px;
+  border-radius: 5px;
+  border: none;
+}
+
 .modal {
   display: none;
   position: fixed;
-  width:100%;
-  height:100%;
-  background: rgba(0,0,0,0.9);
+  top:0;left:0;
+  width:100%;height:100%;
+  background: rgba(0,0,0,0.8);
   justify-content: center;
   align-items: center;
 }
 
 .modal iframe {
   width: 90%;
-  height: 50%;
+  height: 300px;
 }
 </style>
 </head>
@@ -128,116 +121,125 @@ input {
 
 <header>🎬 Movies Dunia</header>
 
-<div class="hero" id="hero"></div>
-
-<div class="search-box">
-  <input id="search" placeholder="Search movies...">
+<div class="hero" id="hero">
+  <div>
+    <h1 id="heroTitle"></h1>
+    <button onclick="playMovie()">▶ Play</button>
+    <button onclick="openTrailer()">🎥 Trailer</button>
+  </div>
 </div>
 
-<div class="row">
+<div class="section">
   <h2>🔥 Trending</h2>
-  <div class="scroll" id="trending"></div>
+  <div class="row" id="trending"></div>
 </div>
 
-<div class="row">
-  <h2>🎬 All Movies</h2>
-  <div class="scroll" id="movies"></div>
+<div class="search">
+  <input type="text" id="search" placeholder="Search movies...">
 </div>
 
-<!-- TRAILER -->
-<div class="modal" id="modal" onclick="closeModal()">
-  <iframe id="trailer" allowfullscreen></iframe>
+<div class="filters">
+  <button onclick="filterCategory('All')" class="active">All</button>
+  <button onclick="filterCategory('Hindi')">Hindi</button>
+  <button onclick="filterCategory('Tamil')">Tamil</button>
+  <button onclick="filterCategory('Bengali')">Bengali</button>
+</div>
+
+<div class="section">
+  <h2>🎬 Movies</h2>
+  <div class="row" id="movies"></div>
+</div>
+
+<div class="modal" id="modal" onclick="closeTrailer()">
+  <iframe id="trailerFrame" frameborder="0" allowfullscreen></iframe>
 </div>
 
 <script>
 const API = "https://movies-dunia-1.onrender.com/api/movies";
 
-let allMovies = [];
+let movies = [];
+let current = null;
 
-async function loadMovies() {
+async function load() {
   const res = await fetch(API);
+  movies = await res.json();
+
+  if (!movies.length) return;
+
+  current = movies[0];
+  setHero(current);
+
+  renderRow(movies.slice(0,10), "trending");
+  renderRow(movies, "movies");
+}
+
+function setHero(m) {
+  document.getElementById("hero").style.backgroundImage =
+    `url(${m.poster || 'https://via.placeholder.com/500'})`;
+  document.getElementById("heroTitle").innerText = m.title;
+}
+
+function renderRow(list, id) {
+  const el = document.getElementById(id);
+  el.innerHTML = "";
+
+  list.forEach(m => {
+    el.innerHTML += `
+      <div class="card" onclick="selectMovie('${m._id}')">
+        <img src="${m.poster || 'https://via.placeholder.com/300'}">
+        <span>${m.title}</span>
+      </div>
+    `;
+  });
+}
+
+function selectMovie(id) {
+  current = movies.find(m => m._id === id);
+  setHero(current);
+}
+
+function playMovie() {
+  window.open(current.link, "_blank");
+}
+
+async function openTrailer() {
+  const query = current.title + " trailer";
+  const res = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(query)}&key=YOUR_API_KEY`);
   const data = await res.json();
 
-  allMovies = data;
-
-  showHero(data[0]);
-  showTrending(data.slice(0,6));
-  showMovies(data);
+  if (data.items && data.items.length) {
+    const videoId = data.items[0].id.videoId;
+    document.getElementById("trailerFrame").src =
+      `https://www.youtube.com/embed/${videoId}`;
+    document.getElementById("modal").style.display = "flex";
+  } else {
+    alert("Trailer not found");
+  }
 }
 
-/* HERO */
-function showHero(movie) {
-  const hero = document.getElementById("hero");
-
-  if (!movie) return;
-
-  hero.style.backgroundImage = `url(${movie.poster})`;
-
-  hero.innerHTML = `
-    <div>
-      <h1>${movie.title}</h1>
-      <a href="${movie.link}" target="_blank" class="btn">▶ Play</a>
-      <button class="btn" onclick="playTrailer('${movie.trailer}')">🎬 Trailer</button>
-    </div>
-  `;
+function closeTrailer() {
+  document.getElementById("modal").style.display = "none";
+  document.getElementById("trailerFrame").src = "";
 }
 
-/* CARD */
-function card(m) {
-  return `
-    <div class="card">
-      <img src="${m.poster || 'https://via.placeholder.com/300x450'}">
-      <div class="info">
-        <div class="title">${m.title}</div>
-        <div class="rating">⭐ ${m.rating || "N/A"}</div>
-
-        <a href="${m.link}" target="_blank" class="btn">Play</a>
-        <button class="btn" onclick="playTrailer('${m.trailer}')">Trailer</button>
-      </div>
-    </div>
-  `;
-}
-
-/* TRENDING */
-function showTrending(movies) {
-  document.getElementById("trending").innerHTML =
-    movies.map(card).join("");
-}
-
-/* ALL MOVIES */
-function showMovies(movies) {
-  document.getElementById("movies").innerHTML =
-    movies.map(card).join("");
-}
-
-/* SEARCH */
-document.getElementById("search").addEventListener("input", function() {
+document.getElementById("search").addEventListener("input", function(){
   const val = this.value.toLowerCase();
-
-  const filtered = allMovies.filter(m =>
-    m.title.toLowerCase().includes(val)
-  );
-
-  showMovies(filtered);
+  const filtered = movies.filter(m => m.title.toLowerCase().includes(val));
+  renderRow(filtered, "movies");
 });
 
-/* TRAILER */
-function playTrailer(url) {
-  if (!url) {
-    alert("Trailer not available");
-    return;
+function filterCategory(cat) {
+  document.querySelectorAll(".filters button").forEach(b=>b.classList.remove("active"));
+  event.target.classList.add("active");
+
+  if (cat === "All") {
+    renderRow(movies, "movies");
+  } else {
+    renderRow(movies.filter(m=>m.category===cat), "movies");
   }
-
-  document.getElementById("trailer").src = url;
-  document.getElementById("modal").style.display = "flex";
 }
 
-function closeModal() {
-  document.getElementById("modal").style.display = "none";
-  document.getElementById("trailer").src = "";
-}
-
-loadMovies();
+load();
 </script>
 
 </body>
