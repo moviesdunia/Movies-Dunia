@@ -1,50 +1,99 @@
 require("dotenv").config();
-
 const express = require("express");
-const mongoose = require("mongoose");
 const cors = require("cors");
+const mongoose = require("mongoose");
+const multer = require("multer");
+const cloudinary = require("cloudinary").v2;
+const streamifier = require("streamifier");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ MongoDB
+/* ================= DB ================= */
 mongoose.connect(process.env.MONGO_URI)
-.then(() => console.log("MongoDB Connected"))
-.catch(err => console.log(err));
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.log(err));
 
-// ✅ Schema
-const Movie = mongoose.model("Movie", {
+/* ================= MODEL ================= */
+const MovieSchema = new mongoose.Schema({
   title: String,
-  video: String,   // 🔥 streaming link
-  poster: String,
   category: String,
-  createdAt: { type: Date, default: Date.now }
+  poster: String,
+  videoUrl: String
 });
 
-// ✅ Get movies
-app.get("/api/movies", async (req, res) => {
-  const movies = await Movie.find().sort({ createdAt: -1 });
+const Movie = mongoose.model("Movie", MovieSchema);
+
+/* ================= CLOUDINARY ================= */
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.API_KEY,
+  api_secret: process.env.API_SECRET
+});
+
+/* ================= MULTER ================= */
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+/* ================= UPLOAD API ================= */
+app.post("/upload", upload.fields([
+  { name: "video" },
+  { name: "poster" }
+]), async (req, res) => {
+  try {
+    const { title, category } = req.body;
+
+    // Upload poster
+    const posterUpload = await cloudinary.uploader.upload_stream({
+      resource_type: "image"
+    });
+
+    const videoUpload = await cloudinary.uploader.upload_stream({
+      resource_type: "video"
+    });
+
+    // convert buffer to stream
+    const uploadPoster = new Promise((resolve) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { resource_type: "image" },
+        (err, result) => resolve(result)
+      );
+      streamifier.createReadStream(req.files.poster[0].buffer).pipe(stream);
+    });
+
+    const uploadVideo = new Promise((resolve) => {
+      const stream = cloudinary.uploader.upload_stream(
+        { resource_type: "video" },
+        (err, result) => resolve(result)
+      );
+      streamifier.createReadStream(req.files.video[0].buffer).pipe(stream);
+    });
+
+    const posterResult = await uploadPoster;
+    const videoResult = await uploadVideo;
+
+    const movie = new Movie({
+      title,
+      category,
+      poster: posterResult.secure_url,
+      videoUrl: videoResult.secure_url
+    });
+
+    await movie.save();
+
+    res.json({ success: true, movie });
+
+  } catch (err) {
+    res.status(500).json(err);
+  }
+});
+
+/* ================= GET MOVIES ================= */
+app.get("/movies", async (req, res) => {
+  const movies = await Movie.find();
   res.json(movies);
 });
 
-// ✅ Add movie (Admin)
-app.post("/api/add", async (req, res) => {
-  const { title, video, poster, category } = req.body;
-
-  if (!title || !video) {
-    return res.json({ message: "Missing data" });
-  }
-
-  await Movie.create({ title, video, poster, category });
-  res.json({ message: "Movie Added" });
-});
-
-// ✅ Delete all (optional)
-app.delete("/api/delete-all", async (req, res) => {
-  await Movie.deleteMany({});
-  res.json({ message: "All deleted" });
-});
-
-const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log("Server running on " + PORT));
+/* ================= START ================= */
+app.listen(5000, () => console.log("Server running on 5000"));
