@@ -11,16 +11,12 @@ const Movie = require("./models/Movie");
 const app = express();
 app.use(express.json());
 
-// ==========================
-// 🔗 DATABASE
-// ==========================
+// ================= DB =================
 mongoose.connect(process.env.MONGO_URL)
 .then(() => console.log("MongoDB Connected"))
 .catch(err => console.log(err));
 
-// ==========================
-// ☁️ CLOUDINARY
-// ==========================
+// ================= CLOUDINARY =================
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.API_KEY,
@@ -37,16 +33,14 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage });
 
-// ==========================
-// 📁 FRONTEND
-// ==========================
+// ================= STATIC =================
 app.use(express.static(path.join(__dirname, "../public")));
 
-// ==========================
-// 🎬 TMDB AUTO DATA
-// ==========================
+// ================= TMDB SAFE =================
 async function getMovieDetails(title) {
   try {
+    if (!process.env.TMDB_KEY) return {};
+
     const res = await axios.get(
       "https://api.themoviedb.org/3/search/movie",
       {
@@ -57,34 +51,36 @@ async function getMovieDetails(title) {
       }
     );
 
-    const movie = res.data.results[0];
-
+    const movie = res.data.results?.[0];
     if (!movie) return {};
 
     return {
       poster: movie.poster_path
         ? "https://image.tmdb.org/t/p/w500" + movie.poster_path
         : "",
-      overview: movie.overview,
-      language: movie.original_language
+      overview: movie.overview || "",
+      language: movie.original_language || ""
     };
 
-  } catch {
+  } catch (err) {
+    console.log("TMDB error:", err.message);
     return {};
   }
 }
 
-// ==========================
-// 🎬 API
-// ==========================
+// ================= API =================
 
 // GET movies
 app.get("/api/movies", async (req, res) => {
-  const movies = await Movie.find().sort({ createdAt: -1 });
-  res.json(movies);
+  try {
+    const movies = await Movie.find().sort({ createdAt: -1 });
+    res.json(movies);
+  } catch {
+    res.json([]);
+  }
 });
 
-// UPLOAD VIDEO + AUTO TMDB
+// UPLOAD
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
     const details = await getMovieDetails(req.body.title);
@@ -93,17 +89,18 @@ app.post("/api/upload", upload.single("video"), async (req, res) => {
       title: req.body.title,
       category: req.body.category || "Trending",
       videoUrl: req.file.path,
-      poster: details.poster || req.body.poster,
+      poster: details.poster || "https://via.placeholder.com/300x450",
       overview: details.overview,
       language: details.language
     });
 
     await movie.save();
 
-    res.json({ message: "Uploaded", movie });
+    res.json({ message: "Uploaded" });
 
   } catch (err) {
-    res.status(500).json(err);
+    console.log(err);
+    res.status(500).json({ error: "Upload failed" });
   }
 });
 
@@ -113,9 +110,7 @@ app.delete("/api/movies/:id", async (req, res) => {
   res.json({ message: "Deleted" });
 });
 
-// ==========================
-// 🌐 ROUTES
-// ==========================
+// ================= ROUTES =================
 app.get("/admin", (req, res) => {
   res.sendFile(path.join(__dirname, "../public/admin.html"));
 });
@@ -124,6 +119,6 @@ app.get("/player", (req, res) => {
   res.sendFile(path.join(__dirname, "../public/player.html"));
 });
 
-// ==========================
+// ================= START =================
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log("Server running"));
