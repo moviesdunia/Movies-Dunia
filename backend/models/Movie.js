@@ -2,11 +2,9 @@ const mongoose = require("mongoose");
 
 const movieSchema = new mongoose.Schema({
   title: String,
+  link: String,
   poster: String,
-  videoUrl: String,
-  category: String,
-  language: String,
-  createdAt: { type: Date, default: Date.now }
-});
+  category: String
+}, { timestamps: true });
 
 module.exports = mongoose.model("Movie", movieSchema);
