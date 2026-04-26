@@ -10,51 +10,100 @@ body {
   margin: 0;
   font-family: Arial;
   background: #f5f5f5;
+  color: #111;
 }
 
 header {
   padding: 15px;
   font-size: 24px;
-  color: #e50914;
   font-weight: bold;
+  color: #e50914;
 }
 
-.movies {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(160px,1fr));
-  gap: 10px;
+/* HERO */
+.hero {
+  height: 300px;
+  display: flex;
+  align-items: flex-end;
+  padding: 20px;
+  color: white;
+  background-size: cover;
+  background-position: center;
+}
+
+/* SEARCH */
+.search-box {
   padding: 10px;
 }
 
+input {
+  width: 100%;
+  padding: 12px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+/* ROWS */
+.row {
+  padding: 10px;
+}
+
+.row h2 {
+  margin-left: 5px;
+}
+
+/* SCROLL */
+.scroll {
+  display: flex;
+  overflow-x: auto;
+  gap: 10px;
+  padding: 10px 5px;
+}
+
+/* CARD */
 .card {
-  background: white;
+  min-width: 140px;
   border-radius: 10px;
   overflow: hidden;
+  background: white;
+  transition: 0.3s;
 }
 
 .card img {
   width: 100%;
-  height: 220px;
+  height: 200px;
   object-fit: cover;
 }
 
+/* HOVER EFFECT */
+.card:hover {
+  transform: scale(1.1);
+}
+
+/* INFO */
 .info {
   padding: 8px;
 }
 
 .title {
+  font-size: 13px;
   font-weight: bold;
 }
 
+.rating {
+  font-size: 12px;
+  margin-bottom: 5px;
+}
+
+/* BUTTONS */
 .btn {
   background: #e50914;
   color: white;
-  padding: 5px;
-  margin-top: 5px;
-  display: inline-block;
-  font-size: 12px;
-  border-radius: 5px;
+  padding: 4px 6px;
+  border-radius: 4px;
+  font-size: 11px;
   text-decoration: none;
+  margin-right: 5px;
 }
 
 /* MODAL */
@@ -79,8 +128,23 @@ header {
 
 <header>🎬 Movies Dunia</header>
 
-<div class="movies" id="movies"></div>
+<div class="hero" id="hero"></div>
 
+<div class="search-box">
+  <input id="search" placeholder="Search movies...">
+</div>
+
+<div class="row">
+  <h2>🔥 Trending</h2>
+  <div class="scroll" id="trending"></div>
+</div>
+
+<div class="row">
+  <h2>🎬 All Movies</h2>
+  <div class="scroll" id="movies"></div>
+</div>
+
+<!-- TRAILER -->
 <div class="modal" id="modal" onclick="closeModal()">
   <iframe id="trailer" allowfullscreen></iframe>
 </div>
@@ -88,33 +152,78 @@ header {
 <script>
 const API = "https://movies-dunia-1.onrender.com/api/movies";
 
+let allMovies = [];
+
 async function loadMovies() {
   const res = await fetch(API);
   const data = await res.json();
 
-  const container = document.getElementById("movies");
-  container.innerHTML = "";
+  allMovies = data;
 
-  data.forEach(m => {
-    const poster = m.poster || "https://via.placeholder.com/300x450";
-
-    container.innerHTML += `
-      <div class="card">
-        <img src="${poster}">
-        <div class="info">
-          <div class="title">${m.title}</div>
-          <div>⭐ ${m.rating}</div>
-
-          <a href="${m.link}" target="_blank" class="btn">Play</a>
-          <button class="btn" onclick="playTrailer('${m.trailer}')">Trailer</button>
-        </div>
-      </div>
-    `;
-  });
+  showHero(data[0]);
+  showTrending(data.slice(0,6));
+  showMovies(data);
 }
 
+/* HERO */
+function showHero(movie) {
+  const hero = document.getElementById("hero");
+
+  if (!movie) return;
+
+  hero.style.backgroundImage = `url(${movie.poster})`;
+
+  hero.innerHTML = `
+    <div>
+      <h1>${movie.title}</h1>
+      <a href="${movie.link}" target="_blank" class="btn">▶ Play</a>
+      <button class="btn" onclick="playTrailer('${movie.trailer}')">🎬 Trailer</button>
+    </div>
+  `;
+}
+
+/* CARD */
+function card(m) {
+  return `
+    <div class="card">
+      <img src="${m.poster || 'https://via.placeholder.com/300x450'}">
+      <div class="info">
+        <div class="title">${m.title}</div>
+        <div class="rating">⭐ ${m.rating || "N/A"}</div>
+
+        <a href="${m.link}" target="_blank" class="btn">Play</a>
+        <button class="btn" onclick="playTrailer('${m.trailer}')">Trailer</button>
+      </div>
+    </div>
+  `;
+}
+
+/* TRENDING */
+function showTrending(movies) {
+  document.getElementById("trending").innerHTML =
+    movies.map(card).join("");
+}
+
+/* ALL MOVIES */
+function showMovies(movies) {
+  document.getElementById("movies").innerHTML =
+    movies.map(card).join("");
+}
+
+/* SEARCH */
+document.getElementById("search").addEventListener("input", function() {
+  const val = this.value.toLowerCase();
+
+  const filtered = allMovies.filter(m =>
+    m.title.toLowerCase().includes(val)
+  );
+
+  showMovies(filtered);
+});
+
+/* TRAILER */
 function playTrailer(url) {
-  if (!url || url === "undefined") {
+  if (!url) {
     alert("Trailer not available");
     return;
   }
