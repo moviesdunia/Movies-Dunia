@@ -1,122 +1,102 @@
-require("dotenv").config();
-
 const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
-const multer = require("multer");
 const axios = require("axios");
-const cloudinary = require("cloudinary").v2;
-const path = require("path");
+require("dotenv").config();
 
 const app = express();
-
 app.use(cors());
 app.use(express.json());
-app.use(express.static("public"));
+app.use(express.static("public")); // VERY IMPORTANT
 
-// ===== MongoDB =====
+// MongoDB
 mongoose.connect(process.env.MONGO_URI)
-.then(()=>console.log("MongoDB Connected"))
-.catch(err=>console.log(err));
+.then(() => console.log("MongoDB Connected"))
+.catch(err => console.log(err));
 
-// ===== Model =====
-const Movie = mongoose.model("Movie", {
+// Schema
+const MovieSchema = new mongoose.Schema({
   title: String,
   link: String,
   poster: String,
   trailer: String,
-  category: String,
+  category: String
 });
 
-// ===== Cloudinary =====
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
+const Movie = mongoose.model("Movie", MovieSchema);
 
-// ===== Upload =====
-const upload = multer({ dest: "uploads/" });
-
-// ===== TMDB helper =====
-async function getMovieData(title) {
-  try {
-    const res = await axios.get(
-      `https://api.themoviedb.org/3/search/movie?api_key=${process.env.TMDB_KEY}&query=${title}`
-    );
-
-    const movie = res.data.results[0];
-
-    if (!movie) return {};
-
-    return {
-      poster: "https://image.tmdb.org/t/p/w500" + movie.poster_path,
-      trailer: `https://www.youtube.com/embed?search_query=${title} trailer`
-    };
-
-  } catch {
-    return {};
-  }
-}
-
-// ===== Upload API =====
-app.post("/api/upload", upload.single("video"), async (req, res) => {
-  try {
-    const { title, category } = req.body;
-
-    let videoUrl = "";
-
-    if (req.file) {
-      const result = await cloudinary.uploader.upload(req.file.path, {
-        resource_type: "video",
-      });
-      videoUrl = result.secure_url;
-    }
-
-    const extra = await getMovieData(title);
-
-    const movie = new Movie({
-      title,
-      category,
-      link: videoUrl,
-      poster: extra.poster || "",
-      trailer: extra.trailer || ""
-    });
-
-    await movie.save();
-
-    res.json({ success: true });
-
-  } catch (err) {
-    console.log(err);
-    res.json({ success: false });
-  }
-});
-
-// ===== Get movies =====
+// 🎬 GET MOVIES
 app.get("/api/movies", async (req, res) => {
   const movies = await Movie.find().sort({ _id: -1 });
   res.json(movies);
 });
 
-// ===== Delete all =====
-app.delete("/api/delete-all", async (req, res) => {
-  await Movie.deleteMany({});
-  res.json({ success: true });
+// 🎬 ADD MOVIE (AUTO POSTER + TRAILER)
+app.post("/api/movies", async (req, res) => {
+  try {
+    const { title, link, category } = req.body;
+
+    let poster = "";
+    let trailer = "";
+
+    // TMDB SEARCH
+    const search = await axios.get(
+      "https://api.themoviedb.org/3/search/movie",
+      {
+        params: {
+          api_key: process.env.TMDB_API_KEY,
+          query: title
+        }
+      }
+    );
+
+    if (search.data.results.length > 0) {
+      const movie = search.data.results[0];
+      poster = "https://image.tmdb.org/t/p/w500" + movie.poster_path;
+
+      // GET TRAILER
+      const video = await axios.get(
+        `https://api.themoviedb.org/3/movie/${movie.id}/videos`,
+        {
+          params: {
+            api_key: process.env.TMDB_API_KEY
+          }
+        }
+      );
+
+      const trailerData = video.data.results.find(
+        v => v.type === "Trailer" && v.site === "YouTube"
+      );
+
+      if (trailerData) {
+        trailer = `https://www.youtube.com/embed/${trailerData.key}`;
+      }
+    }
+
+    const newMovie = new Movie({
+      title,
+      link,
+      category,
+      poster,
+      trailer
+    });
+
+    await newMovie.save();
+    res.json({ message: "Movie Uploaded Successfully" });
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Upload Failed" });
+  }
 });
 
-// ===== Pages =====
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html"));
+// ❌ DELETE ALL
+app.delete("/api/movies", async (req, res) => {
+  await Movie.deleteMany();
+  res.json({ message: "All movies deleted" });
 });
 
-app.get("/admin", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/admin.html"));
+// SERVER
+app.listen(process.env.PORT, () => {
+  console.log("Server running...");
 });
-
-app.get("/watch", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/player.html"));
-});
-
-// ===== Start =====
-app.listen(5000, () => console.log("Server running"));
