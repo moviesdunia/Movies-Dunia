@@ -15,7 +15,7 @@ const MONGO_URI = process.env.MONGO_URI;
 const TMDB_KEY = process.env.TMDB_KEY;
 const YT_KEY = process.env.YT_KEY;
 const ADMIN_USER = process.env.ADMIN_USER || "admin";
-const ADMIN_PASS = process.env.ADMIN_PASS || "1234";
+const ADMIN_PASS = process.env.ADMIN_PASS || "Shiuli#420";
 
 /* ============================
    🗄️ DATABASE
