@@ -1,17 +1,21 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <title>Player</title>
-</head>
-<body>
+<body style="background:black;text-align:center;">
 
-<video id="player" width="600" controls></video>
+<video id="video" controls autoplay style="width:90%"></video>
+
+<br><br>
+
+<a id="download" download>
+<button>⬇ Download</button>
+</a>
 
 <script>
-const urlParams = new URLSearchParams(window.location.search);
-const video = urlParams.get('video');
+const p = new URLSearchParams(location.search);
+const url = p.get("video");
 
-document.getElementById('player').src = video;
+video.src = url;
+download.href = url;
 </script>
 
 </body>
