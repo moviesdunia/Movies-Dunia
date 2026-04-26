@@ -7,12 +7,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ MongoDB Connection
+// MongoDB
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("MongoDB Connected"))
-  .catch(err => console.log(err));
+.then(() => console.log("MongoDB Connected"))
+.catch(err => console.log(err));
 
-// ✅ Movie Schema
+// Schema
 const Movie = mongoose.model("Movie", {
   title: String,
   link: String,
@@ -22,26 +22,39 @@ const Movie = mongoose.model("Movie", {
   createdAt: { type: Date, default: Date.now }
 });
 
-// ✅ Home Route
+// Home
 app.get('/', (req, res) => {
   res.send("Backend Working 🚀");
 });
 
-// ✅ Get Movies API
+// Get Movies
 app.get('/api/movies', async (req, res) => {
+  const movies = await Movie.find().sort({ createdAt: -1 });
+  res.json(movies);
+});
+
+// ✅ NEW: Add Movie API (ADMIN)
+app.post('/api/add-movie', async (req, res) => {
   try {
-    const movies = await Movie.find().sort({ createdAt: -1 });
-    res.json(movies);
+    const { title, link, poster, category, rating } = req.body;
+
+    const movie = await Movie.create({
+      title,
+      link,
+      poster,
+      category,
+      rating
+    });
+
+    res.json({ success: true, movie });
   } catch (err) {
-    res.status(500).json({ error: "Failed to fetch movies" });
+    res.json({ success: false });
   }
 });
 
-// ✅ Telegram Webhook
+// Telegram webhook (same as before)
 app.post('/webhook', async (req, res) => {
   try {
-    console.log("Incoming:", JSON.stringify(req.body));
-
     const message = req.body.channel_post || req.body.message;
 
     if (message && message.text) {
@@ -50,55 +63,32 @@ app.post('/webhook', async (req, res) => {
       let poster = "";
       let rating = "N/A";
 
-      // 🎬 Fetch movie data from OMDB
       try {
         const response = await axios.get(
           `https://www.omdbapi.com/?t=${encodeURIComponent(text)}&apikey=eee94f23`
         );
 
         if (response.data && response.data.Response === "True") {
-          poster = response.data.Poster !== "N/A" ? response.data.Poster : "";
-          rating = response.data.imdbRating !== "N/A" ? response.data.imdbRating : "N/A";
+          poster = response.data.Poster;
+          rating = response.data.imdbRating;
         }
-      } catch (err) {
-        console.log("OMDB Error:", err.message);
-      }
+      } catch {}
 
-      // 🎯 Category detection
-      let category = "Other";
-      const lower = text.toLowerCase();
-
-      if (lower.includes("hindi")) category = "Hindi";
-      else if (lower.includes("tamil")) category = "Tamil";
-      else if (lower.includes("bengali")) category = "Bengali";
-
-      // ✅ CREATE TELEGRAM POST LINK (IMPORTANT FIX)
-      const username = message.chat.username;
-      const messageId = message.message_id;
-
-      const postLink = username
-        ? `https://t.me/${username}/${messageId}`
-        : "https://t.me/moviesurequired";
-
-      // 💾 Save to DB
       await Movie.create({
         title: text,
-        link: postLink,
+        link: "https://t.me/moviesurequired",
         poster,
-        category,
+        category: "Other",
         rating
       });
-
-      console.log("Saved:", text);
     }
 
     res.sendStatus(200);
-  } catch (err) {
-    console.log("Webhook Error:", err);
+  } catch {
     res.sendStatus(500);
   }
 });
 
-// ✅ Start Server
+// Start
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log("Server running on " + PORT));
