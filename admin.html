@@ -1,139 +1,40 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Admin Panel</title>
-
-<style>
-body {
-  font-family: Arial;
-  background: #111;
-  color: white;
-  text-align: center;
-}
-
-.box {
-  margin: 50px auto;
-  width: 300px;
-}
-
-input {
-  width: 100%;
-  padding: 10px;
-  margin: 5px 0;
-}
-
-button {
-  padding: 10px;
-  background: red;
-  color: white;
-  border: none;
-  width: 100%;
-  margin-top: 5px;
-}
-
-.movie {
-  background: #222;
-  padding: 10px;
-  margin: 10px;
-}
-</style>
+<title>Admin</title>
 </head>
-
 <body>
 
-<div class="box" id="loginBox">
-  <h2>Admin Login</h2>
-  <input id="user" placeholder="Username">
-  <input id="pass" type="password" placeholder="Password">
-  <button onclick="login()">Login</button>
-</div>
+<h2>Add Movie</h2>
 
-<div id="panel" style="display:none;">
-  <h2>Admin Panel</h2>
+<input id="title" placeholder="Title"><br><br>
+<input id="video" placeholder="Video Link"><br><br>
+<input id="poster" placeholder="Poster URL"><br><br>
 
-  <input id="title" placeholder="Title">
-  <input id="link" placeholder="Telegram Link">
-  <input id="poster" placeholder="Poster URL">
-  <input id="trailer" placeholder="Trailer URL">
-  <input id="rating" placeholder="Rating">
+<select id="category">
+  <option>Hindi</option>
+  <option>Tamil</option>
+  <option>Bengali</option>
+</select><br><br>
 
-  <button onclick="addMovie()">Add Movie</button>
-
-  <h3>All Movies</h3>
-  <div id="movies"></div>
-</div>
+<button onclick="add()">Add Movie</button>
 
 <script>
 const API = "https://movies-dunia-1.onrender.com";
 
-/* LOGIN */
-async function login() {
-  const username = document.getElementById("user").value;
-  const password = document.getElementById("pass").value;
-
-  const res = await fetch(API + "/api/login", {
+async function add() {
+  await fetch(API + "/api/add", {
     method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify({ username, password })
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      title: title.value,
+      video: video.value,
+      poster: poster.value,
+      category: category.value
+    })
   });
 
-  const data = await res.json();
-
-  if (data.success) {
-    document.getElementById("loginBox").style.display = "none";
-    document.getElementById("panel").style.display = "block";
-    loadMovies();
-  } else {
-    alert("Wrong login");
-  }
-}
-
-/* LOAD */
-async function loadMovies() {
-  const res = await fetch(API + "/api/movies");
-  const data = await res.json();
-
-  const container = document.getElementById("movies");
-  container.innerHTML = "";
-
-  data.forEach(m => {
-    container.innerHTML += `
-      <div class="movie">
-        <b>${m.title}</b><br>
-        ⭐ ${m.rating || "N/A"}<br>
-        <button onclick="deleteMovie('${m._id}')">Delete</button>
-      </div>
-    `;
-  });
-}
-
-/* ADD */
-async function addMovie() {
-  const movie = {
-    title: document.getElementById("title").value,
-    link: document.getElementById("link").value,
-    poster: document.getElementById("poster").value,
-    trailer: document.getElementById("trailer").value,
-    rating: document.getElementById("rating").value
-  };
-
-  await fetch(API + "/api/add-movie", {
-    method: "POST",
-    headers: {"Content-Type":"application/json"},
-    body: JSON.stringify(movie)
-  });
-
-  alert("Added!");
-  loadMovies();
-}
-
-/* DELETE */
-async function deleteMovie(id) {
-  await fetch(API + "/api/delete/" + id, {
-    method: "DELETE"
-  });
-
-  loadMovies();
+  alert("Movie Added");
 }
 </script>
 
