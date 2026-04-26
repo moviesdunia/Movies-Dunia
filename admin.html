@@ -3,63 +3,45 @@
 <head>
   <title>Admin Panel</title>
 </head>
-<body>
+<body style="background:black;color:white;font-family:sans-serif">
 
-<h2>Admin Login</h2>
+<h2>Add Movie</h2>
 
-<div id="login">
-  <input id="user" placeholder="Username"><br><br>
-  <input id="pass" type="password" placeholder="Password"><br><br>
-  <button onclick="login()">Login</button>
-</div>
+<input placeholder="Title" id="title"><br><br>
+<input placeholder="Poster URL (TMDB)" id="poster"><br><br>
 
-<div id="panel" style="display:none;">
-  <h2>Upload Movie</h2>
+<select id="category">
+  <option>Trending</option>
+  <option>Latest</option>
+</select><br><br>
 
-  <form id="uploadForm">
-    <input name="title" placeholder="Title"><br><br>
-    <input name="category" placeholder="Category"><br><br>
-    Poster: <input type="file" name="poster"><br><br>
-    Video: <input type="file" name="video"><br><br>
-    <button>Upload</button>
-  </form>
-</div>
+<select id="language">
+  <option>Hindi</option>
+  <option>Tamil</option>
+  <option>English</option>
+</select><br><br>
+
+<input type="file" id="video"><br><br>
+
+<button onclick="upload()">Upload</button>
 
 <script>
-const API = "https://movies-dunia-1.onrender.com";
+async function upload() {
+  const form = new FormData();
 
-async function login() {
-  const res = await fetch(API + "/admin/login", {
+  form.append("title", document.getElementById("title").value);
+  form.append("poster", document.getElementById("poster").value);
+  form.append("category", document.getElementById("category").value);
+  form.append("language", document.getElementById("language").value);
+  form.append("video", document.getElementById("video").files[0]);
+
+  await fetch("/api/add-movie", {
     method: "POST",
-    headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({
-      username: document.getElementById("user").value,
-      password: document.getElementById("pass").value
-    })
-  });
-
-  const data = await res.json();
-
-  if (data.success) {
-    document.getElementById("login").style.display = "none";
-    document.getElementById("panel").style.display = "block";
-  } else {
-    alert("Wrong login");
-  }
-}
-
-document.getElementById("uploadForm").onsubmit = async (e) => {
-  e.preventDefault();
-
-  const formData = new FormData(e.target);
-
-  await fetch(API + "/admin/upload", {
-    method: "POST",
-    body: formData
+    body: form
   });
 
   alert("Uploaded!");
-};
+}
 </script>
 
 </body>
