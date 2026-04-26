@@ -4,33 +4,41 @@ const path = require("path");
 const mongoose = require("mongoose");
 const multer = require("multer");
 const cloudinary = require("cloudinary").v2;
+const axios = require("axios");
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ MongoDB
+// =======================
+// 🔗 MongoDB
+// =======================
 mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("MongoDB Connected"))
 .catch(err => console.log(err));
 
-// ✅ Movie Model
+// =======================
+// 🎬 Model
+// =======================
 const Movie = require("./models/Movie");
 
-// ✅ Cloudinary Config
+// =======================
+// ☁️ Cloudinary
+// =======================
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
 
-// ✅ Multer (file upload)
+// =======================
+// 📦 Upload
+// =======================
 const upload = multer({ dest: "uploads/" });
 
-
-// ==========================
-// 🎬 ADD MOVIE
-// ==========================
+// =======================
+// ➕ ADD MOVIE (AUTO POSTER)
+// =======================
 app.post("/api/add-movie", upload.single("video"), async (req, res) => {
   try {
     let videoUrl = "";
@@ -42,9 +50,31 @@ app.post("/api/add-movie", upload.single("video"), async (req, res) => {
       videoUrl = uploadRes.secure_url;
     }
 
+    // 🎬 Fetch poster from TMDB
+    let posterUrl = "";
+
+    const tmdb = await axios.get(
+      "https://api.themoviedb.org/3/search/movie",
+      {
+        params: {
+          api_key: process.env.TMDB_API_KEY,
+          query: req.body.title
+        }
+      }
+    );
+
+    if (tmdb.data.results.length > 0) {
+      posterUrl =
+        "https://image.tmdb.org/t/p/w500" +
+        tmdb.data.results[0].poster_path;
+    } else {
+      posterUrl =
+        "https://via.placeholder.com/300x450?text=No+Poster";
+    }
+
     const movie = new Movie({
       title: req.body.title,
-      poster: req.body.poster,
+      poster: posterUrl,
       category: req.body.category,
       language: req.body.language,
       videoUrl: videoUrl
@@ -53,56 +83,45 @@ app.post("/api/add-movie", upload.single("video"), async (req, res) => {
     await movie.save();
 
     res.json({ message: "Movie uploaded successfully" });
+
   } catch (err) {
+    console.log(err);
     res.status(500).json(err);
   }
 });
 
-
-// ==========================
-// 📥 GET ALL MOVIES
-// ==========================
+// =======================
+// 📥 GET MOVIES
+// =======================
 app.get("/api/movies", async (req, res) => {
   const movies = await Movie.find().sort({ createdAt: -1 });
   res.json(movies);
 });
 
-
-// ==========================
-// 🗑 DELETE ONE MOVIE
-// ==========================
+// =======================
+// 🗑 DELETE ONE
+// =======================
 app.delete("/api/delete/:id", async (req, res) => {
-  try {
-    await Movie.findByIdAndDelete(req.params.id);
-    res.json({ message: "Movie deleted" });
-  } catch (err) {
-    res.status(500).json(err);
-  }
+  await Movie.findByIdAndDelete(req.params.id);
+  res.json({ message: "Deleted" });
 });
 
-
-// ==========================
-// 🗑 DELETE ALL MOVIES
-// ==========================
+// =======================
+// 🗑 DELETE ALL
+// =======================
 app.delete("/api/delete-all", async (req, res) => {
-  try {
-    await Movie.deleteMany({});
-    res.json({ message: "All movies deleted" });
-  } catch (err) {
-    res.status(500).json(err);
-  }
+  await Movie.deleteMany({});
+  res.json({ message: "All deleted" });
 });
 
-
-// ==========================
+// =======================
 // 🌐 FRONTEND
-// ==========================
+// =======================
 app.use(express.static(path.join(__dirname, "..")));
 
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "..", "index.html"));
 });
 
-
-// ==========================
+// =======================
 app.listen(5000, () => console.log("Server running on port 5000"));
