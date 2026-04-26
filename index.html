@@ -21,15 +21,7 @@ header {
   text-align: center;
 }
 
-/* Trending Row */
-.trending {
-  padding: 10px;
-}
-
-.trending h2 {
-  margin-left: 10px;
-}
-
+/* Trending */
 .trending-row {
   display: flex;
   overflow-x: auto;
@@ -37,22 +29,16 @@ header {
   padding: 10px;
 }
 
-.trending-card {
-  min-width: 140px;
-  cursor: pointer;
-}
-
 .trending-card img {
-  width: 100%;
+  width: 140px;
   height: 200px;
   border-radius: 8px;
-  object-fit: cover;
 }
 
 /* Search */
 .search-box {
-  padding: 10px;
   text-align: center;
+  padding: 10px;
 }
 
 input {
@@ -67,7 +53,6 @@ input {
   display: flex;
   gap: 10px;
   padding: 10px;
-  overflow-x: auto;
 }
 
 .categories button {
@@ -86,13 +71,8 @@ input {
 .movies {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150px,1fr));
-  gap: 15px;
-  padding: 15px;
-}
-
-.card {
-  position: relative;
-  cursor: pointer;
+  gap: 10px;
+  padding: 10px;
 }
 
 .card img {
@@ -101,15 +81,31 @@ input {
   border-radius: 8px;
 }
 
-/* Overlay */
-.overlay {
-  position: absolute;
-  bottom: 0;
+/* 🎥 Popup */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: 100%;
-  padding: 10px;
-  background: linear-gradient(transparent, black);
+  height: 100%;
+  background: rgba(0,0,0,0.9);
+  display: none;
+  justify-content: center;
+  align-items: center;
 }
 
+.popup iframe {
+  width: 90%;
+  height: 50%;
+}
+
+.close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  font-size: 30px;
+  cursor: pointer;
+}
 </style>
 </head>
 
@@ -117,11 +113,8 @@ input {
 
 <header>🎬 Movies Dunia</header>
 
-<!-- 🔥 Trending -->
-<div class="trending">
-  <h2>🔥 Trending Now</h2>
-  <div class="trending-row" id="trending"></div>
-</div>
+<h2 style="padding-left:10px;">🔥 Trending</h2>
+<div class="trending-row" id="trending"></div>
 
 <div class="search-box">
   <input type="text" id="search" placeholder="Search movies...">
@@ -136,6 +129,12 @@ input {
 
 <div class="movies" id="movies"></div>
 
+<!-- 🎥 Trailer Popup -->
+<div class="popup" id="popup">
+  <span class="close" onclick="closePopup()">✖</span>
+  <iframe id="trailer" src="" frameborder="0" allowfullscreen></iframe>
+</div>
+
 <script>
 const API = "https://movies-dunia-1.onrender.com/api/movies";
 
@@ -148,11 +147,10 @@ async function loadMovies() {
 
   allMovies = data;
 
-  displayTrending(data.slice(0, 10)); // latest 10
+  displayTrending(data.slice(0, 10));
   displayMovies(data);
 }
 
-/* 🔥 Trending */
 function displayTrending(movies) {
   const container = document.getElementById("trending");
   container.innerHTML = "";
@@ -161,14 +159,13 @@ function displayTrending(movies) {
     const poster = movie.poster || "https://via.placeholder.com/300x450";
 
     container.innerHTML += `
-      <div class="trending-card" onclick="openMovie('${movie.link}')">
+      <div class="trending-card" onclick="playTrailer('${movie.title}')">
         <img src="${poster}">
       </div>
     `;
   });
 }
 
-/* 🎬 Grid */
 function displayMovies(movies) {
   const container = document.getElementById("movies");
   container.innerHTML = "";
@@ -177,16 +174,27 @@ function displayMovies(movies) {
     const poster = movie.poster || "https://via.placeholder.com/300x450";
 
     container.innerHTML += `
-      <div class="card" onclick="openMovie('${movie.link}')">
+      <div class="card" onclick="playTrailer('${movie.title}')">
         <img src="${poster}">
-        <div class="overlay">${movie.title}</div>
       </div>
     `;
   });
 }
 
-function openMovie(link) {
-  window.open(link, "_blank");
+/* 🎥 PLAY TRAILER */
+function playTrailer(title) {
+  const query = encodeURIComponent(title + " trailer");
+
+  const url = `https://www.youtube.com/embed?listType=search&list=${query}`;
+
+  document.getElementById("trailer").src = url;
+  document.getElementById("popup").style.display = "flex";
+}
+
+/* CLOSE */
+function closePopup() {
+  document.getElementById("popup").style.display = "none";
+  document.getElementById("trailer").src = "";
 }
 
 /* Filters */
