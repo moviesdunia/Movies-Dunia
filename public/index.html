@@ -1,41 +1,33 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Movies Dunia</title>
-
-<style>
-body { background:#111; color:white; font-family:Arial; }
-
-.header {
-  display:flex;
-  justify-content:space-between;
-  padding:10px;
-}
-
-.logo { color:red; font-size:24px; }
-
-.grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fill,150px);
-  gap:15px;
-  padding:20px;
-}
-
-.card img {
-  width:100%;
-  border-radius:10px;
-}
-
-.card:hover { transform:scale(1.1); cursor:pointer; }
-</style>
+  <title>Movies Dunia</title>
+  <style>
+    body {
+      background: black;
+      color: white;
+      font-family: Arial;
+    }
+    h1 {
+      color: red;
+    }
+    .grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .card {
+      width: 150px;
+    }
+    img {
+      width: 100%;
+      border-radius: 8px;
+    }
+  </style>
 </head>
-
 <body>
 
-<div class="header">
-  <div class="logo">Movies Dunia</div>
-</div>
-
+<h1>Movies Dunia</h1>
 <div class="grid" id="movies"></div>
 
 <script>
@@ -44,20 +36,17 @@ async function loadMovies() {
   const data = await res.json();
 
   const container = document.getElementById("movies");
+  container.innerHTML = "";
 
   data.forEach(m => {
     container.innerHTML += `
-      <div class="card" onclick="watch('${m.link}')">
-        <img src="${m.poster || 'https://via.placeholder.com/150'}">
+      <div class="card">
+        <img src="${m.poster}" />
         <p>${m.title}</p>
+        <a href="${m.link}" target="_blank">Watch</a>
       </div>
     `;
   });
-}
-
-function watch(link) {
-  localStorage.setItem("video", link);
-  window.location = "/watch";
 }
 
 loadMovies();
