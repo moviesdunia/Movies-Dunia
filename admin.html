@@ -31,6 +31,7 @@
     #status {
       margin-top: 10px;
       font-weight: bold;
+      color: yellow;
     }
   </style>
 </head>
@@ -70,6 +71,8 @@
 <div id="list"></div>
 
 <script>
+
+// LOAD MOVIES
 async function loadMovies() {
   const res = await fetch("/api/movies");
   const data = await res.json();
@@ -87,6 +90,7 @@ async function loadMovies() {
   });
 }
 
+// UPLOAD FUNCTION WITH ERROR + PROGRESS
 function upload() {
   const file = document.getElementById("video").files[0];
   if (!file) return alert("Select a video!");
@@ -99,6 +103,7 @@ function upload() {
 
   const xhr = new XMLHttpRequest();
 
+  // PROGRESS
   xhr.upload.onprogress = function (e) {
     if (e.lengthComputable) {
       const percent = Math.round((e.loaded / e.total) * 100);
@@ -107,17 +112,21 @@ function upload() {
     }
   };
 
+  // RESPONSE
   xhr.onload = function () {
     if (xhr.status === 200) {
       document.getElementById("status").innerText = "✅ Uploaded!";
       loadMovies();
     } else {
-      document.getElementById("status").innerText = "❌ Upload failed";
+      document.getElementById("status").innerText =
+        "❌ Error: " + xhr.responseText;
     }
   };
 
+  // NETWORK ERROR
   xhr.onerror = function () {
-    document.getElementById("status").innerText = "❌ Network error";
+    document.getElementById("status").innerText =
+      "❌ Network error";
   };
 
   xhr.open("POST", "/api/add-movie");
@@ -126,11 +135,13 @@ function upload() {
   document.getElementById("status").innerText = "Uploading...";
 }
 
+// DELETE ONE
 async function deleteMovie(id) {
   await fetch(`/api/delete/${id}`, { method: "DELETE" });
   loadMovies();
 }
 
+// DELETE ALL
 async function deleteAll() {
   if (!confirm("Delete ALL movies?")) return;
 
@@ -138,7 +149,9 @@ async function deleteAll() {
   loadMovies();
 }
 
+// INITIAL LOAD
 loadMovies();
+
 </script>
 
 </body>
