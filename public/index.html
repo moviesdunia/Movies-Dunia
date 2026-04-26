@@ -1,60 +1,73 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Movies Dunia</title>
-<style>
-body { background:black; color:white; margin:0; font-family:Arial; }
-h1 { color:red; padding:15px; }
-
-.grid {
-  display:grid;
-  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
-  gap:15px;
-  padding:15px;
-}
-
-.card { cursor:pointer; transition:0.3s; }
-.card:hover { transform:scale(1.1); }
-
-img { width:100%; height:250px; object-fit:cover; }
-</style>
+  <title>Movies Dunia</title>
+  <style>
+    body {
+      background: black;
+      color: white;
+      font-family: Arial;
+    }
+    h1 {
+      color: red;
+    }
+    .movie {
+      margin: 20px 0;
+    }
+    video {
+      width: 300px;
+    }
+    a {
+      color: yellow;
+      display: block;
+      margin-top: 5px;
+    }
+  </style>
 </head>
 
 <body>
 
 <h1>Movies Dunia</h1>
-<div class="grid" id="movies"></div>
+
+<div id="movies">Loading...</div>
 
 <script>
+const API = "https://movies-dunia-1.onrender.com"; // 👈 YOUR LIVE URL
+
 async function loadMovies() {
   try {
-    const res = await fetch("/api/movies");
+    const res = await fetch(API + "/api/movies");
     const data = await res.json();
 
     const container = document.getElementById("movies");
+    container.innerHTML = "";
 
     if (data.length === 0) {
-      container.innerHTML = "<h2>No Movies Yet</h2>";
+      container.innerHTML = "<h3>No Movies Yet</h3>";
       return;
     }
 
-    data.forEach(m => {
-      container.innerHTML += `
-        <div class="card" onclick="play('${m.videoUrl}')">
-          <img src="${m.poster}">
-          <h3>${m.title}</h3>
-        </div>
+    data.forEach(movie => {
+      const div = document.createElement("div");
+      div.className = "movie";
+
+      div.innerHTML = `
+        <h3>${movie.title}</h3>
+
+        <video controls>
+          <source src="${movie.videoUrl}" type="video/mp4">
+        </video>
+
+        <a href="${movie.videoUrl}" download>⬇ Download</a>
       `;
+
+      container.appendChild(div);
     });
 
-  } catch {
-    document.getElementById("movies").innerHTML =
-      "<h2>Server Loading... Refresh</h2>";
+  } catch (err) {
+    document.getElementById("movies").innerHTML = "Error loading movies";
+    console.error(err);
   }
-}
-
-function play(url) {
-  window.location.href = "/player.html?video=" + encodeURIComponent(url);
 }
 
 loadMovies();
