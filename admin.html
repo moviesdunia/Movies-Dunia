@@ -5,27 +5,27 @@
 
   <style>
     body {
-      background: black;
-      color: white;
-      font-family: Arial;
-      padding: 20px;
+      background:black;
+      color:white;
+      font-family:sans-serif;
+      padding:20px;
     }
 
     input, select {
-      padding: 8px;
-      margin: 5px 0;
-      width: 300px;
+      padding:8px;
+      margin:5px;
+      width:300px;
     }
 
     button {
-      padding: 8px 12px;
-      margin: 5px;
-      cursor: pointer;
+      padding:8px 12px;
+      margin:5px;
+      cursor:pointer;
     }
 
     .movie {
-      border-bottom: 1px solid gray;
-      padding: 10px;
+      border-bottom:1px solid gray;
+      padding:10px;
     }
   </style>
 </head>
@@ -34,10 +34,9 @@
 
 <h2>🎛 Admin Panel</h2>
 
-<h3>➕ Add Movie</h3>
+<h3>Add Movie</h3>
 
 <input id="title" placeholder="Movie Title"><br>
-<input id="poster" placeholder="Poster URL (TMDB)"><br>
 
 <select id="category">
   <option>Trending</option>
@@ -47,37 +46,34 @@
 <select id="language">
   <option>Hindi</option>
   <option>English</option>
-  <option>Tamil</option>
 </select><br>
 
 <input type="file" id="video"><br>
 
-<button onclick="upload()">Upload Movie</button>
+<button onclick="upload()">Upload</button>
 
 <hr>
 
-<h3>🗑 Manage Movies</h3>
+<h3>Manage Movies</h3>
 
 <button onclick="deleteAll()" style="background:red;color:white;">
-  Delete All Movies
+  Delete All
 </button>
 
-<div id="moviesList"></div>
-
+<div id="list"></div>
 
 <script>
 async function loadMovies() {
   const res = await fetch("/api/movies");
   const data = await res.json();
 
-  const container = document.getElementById("moviesList");
-  container.innerHTML = "";
+  const list = document.getElementById("list");
+  list.innerHTML = "";
 
   data.forEach(m => {
-    container.innerHTML += `
+    list.innerHTML += `
       <div class="movie">
         <b>${m.title}</b><br>
-        <small>${m.category} | ${m.language}</small><br>
         <button onclick="deleteMovie('${m._id}')">Delete</button>
       </div>
     `;
@@ -87,18 +83,17 @@ async function loadMovies() {
 async function upload() {
   const form = new FormData();
 
-  form.append("title", document.getElementById("title").value);
-  form.append("poster", document.getElementById("poster").value);
-  form.append("category", document.getElementById("category").value);
-  form.append("language", document.getElementById("language").value);
-  form.append("video", document.getElementById("video").files[0]);
+  form.append("title", title.value);
+  form.append("category", category.value);
+  form.append("language", language.value);
+  form.append("video", video.files[0]);
 
   await fetch("/api/add-movie", {
     method: "POST",
     body: form
   });
 
-  alert("Movie Uploaded!");
+  alert("Uploaded!");
   loadMovies();
 }
 
@@ -108,7 +103,7 @@ async function deleteMovie(id) {
 }
 
 async function deleteAll() {
-  if (!confirm("Are you sure you want to delete ALL movies?")) return;
+  if (!confirm("Delete ALL movies?")) return;
 
   await fetch("/api/delete-all", { method: "DELETE" });
   loadMovies();
