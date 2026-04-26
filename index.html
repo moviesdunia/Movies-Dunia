@@ -13,7 +13,6 @@ body {
   color: #111;
 }
 
-/* HEADER */
 header {
   padding: 15px;
   font-size: 24px;
@@ -21,7 +20,6 @@ header {
   color: #e50914;
 }
 
-/* HERO */
 .hero {
   height: 250px;
   background: linear-gradient(to top, #f5f5f5, transparent),
@@ -31,14 +29,7 @@ header {
   padding: 20px;
 }
 
-.hero h1 {
-  font-size: 28px;
-}
-
-/* SEARCH */
-.search-box {
-  padding: 10px;
-}
+.search-box { padding: 10px; }
 
 input {
   width: 100%;
@@ -47,7 +38,6 @@ input {
   border: 1px solid #ccc;
 }
 
-/* CATEGORY */
 .categories {
   display: flex;
   gap: 10px;
@@ -56,11 +46,9 @@ input {
 
 .categories button {
   background: #ddd;
-  color: #111;
-  border: none;
   padding: 8px 15px;
   border-radius: 20px;
-  cursor: pointer;
+  border: none;
 }
 
 .categories .active {
@@ -68,30 +56,20 @@ input {
   color: white;
 }
 
-/* ROW */
-.row {
-  padding: 10px;
-}
-
-.row h2 {
-  margin-bottom: 10px;
-}
-
-/* CAROUSEL */
 .carousel {
   display: flex;
   overflow-x: auto;
   gap: 10px;
+  padding: 10px;
 }
 
 .card {
   min-width: 140px;
   height: 200px;
-  background: #fff;
   border-radius: 10px;
   overflow: hidden;
   position: relative;
-  transition: transform 0.3s;
+  background: #fff;
   box-shadow: 0 2px 8px rgba(0,0,0,0.2);
 }
 
@@ -101,12 +79,6 @@ input {
   object-fit: cover;
 }
 
-/* HOVER */
-.card:hover {
-  transform: scale(1.1);
-  z-index: 2;
-}
-
 .overlay {
   position: absolute;
   bottom: 0;
@@ -114,33 +86,28 @@ input {
   background: rgba(255,255,255,0.95);
   padding: 10px;
   opacity: 0;
-  transition: 0.3s;
 }
 
 .card:hover .overlay {
   opacity: 1;
 }
 
-/* BUTTONS */
 .btn {
-  display: inline-block;
-  margin-top: 5px;
-  padding: 5px 10px;
   background: #e50914;
   color: white;
+  padding: 5px;
   border-radius: 5px;
-  text-decoration: none;
+  display: inline-block;
+  margin-top: 5px;
   font-size: 12px;
-  border: none;
-  cursor: pointer;
+  text-decoration: none;
 }
 
-/* MODAL */
 .modal {
   display: none;
   position: fixed;
-  top:0; left:0;
-  width:100%; height:100%;
+  width:100%;
+  height:100%;
   background: rgba(0,0,0,0.9);
   justify-content: center;
   align-items: center;
@@ -162,31 +129,23 @@ input {
 </div>
 
 <div class="search-box">
-  <input type="text" id="search" placeholder="Search movies...">
+  <input id="search" placeholder="Search movies...">
 </div>
 
 <div class="categories">
   <button class="active" onclick="filterCat('All', this)">All</button>
   <button onclick="filterCat('Hindi', this)">Hindi</button>
   <button onclick="filterCat('Tamil', this)">Tamil</button>
-  <button onclick="filterCat('Bengali', this)">Bengali</button>
 </div>
 
-<!-- TRENDING -->
-<div class="row">
-  <h2>🔥 Trending</h2>
-  <div class="carousel" id="trending"></div>
-</div>
+<h2 style="padding-left:10px;">🔥 Trending</h2>
+<div class="carousel" id="trending"></div>
 
-<!-- ALL MOVIES -->
-<div class="row">
-  <h2>Movies</h2>
-  <div class="carousel" id="movies"></div>
-</div>
+<h2 style="padding-left:10px;">Movies</h2>
+<div class="carousel" id="movies"></div>
 
-<!-- TRAILER MODAL -->
 <div class="modal" id="modal" onclick="closeModal()">
-  <iframe id="trailer" src="" frameborder="0" allowfullscreen></iframe>
+  <iframe id="trailer"></iframe>
 </div>
 
 <script>
@@ -195,33 +154,29 @@ const API = "https://movies-dunia-1.onrender.com/api/movies";
 let allMovies = [];
 
 async function loadMovies() {
-  try {
-    const res = await fetch(API);
-    const data = await res.json();
-    allMovies = data;
+  const res = await fetch(API);
+  const data = await res.json();
+  allMovies = data;
 
-    showTrending(data.slice(0,6));
-    displayMovies(data);
-  } catch (err) {
-    console.log("Error:", err);
-  }
+  showTrending(data.slice(0,6));
+  displayMovies(data);
 }
 
-function createCard(movie) {
-  const poster = movie.poster && movie.poster !== "N/A"
-    ? movie.poster
+function createCard(m) {
+  const poster = m.poster && m.poster !== "N/A"
+    ? m.poster
     : "https://via.placeholder.com/300x450?text=No+Poster";
 
   return `
   <div class="card">
     <img src="${poster}">
     <div class="overlay">
-      <div>${movie.title}</div>
-      <a href="${movie.link}" target="_blank" class="btn">▶ Play</a>
-      <button class="btn" onclick="playTrailer('${movie.title}')">🎬 Trailer</button>
+      <div><b>${m.title}</b></div>
+      <div>⭐ ${m.rating || "N/A"}</div>
+      <a href="${m.link}" target="_blank" class="btn">▶ Play</a>
+      <button class="btn" onclick="playTrailer('${m.title}')">Trailer</button>
     </div>
-  </div>
-  `;
+  </div>`;
 }
 
 function showTrending(movies) {
@@ -261,12 +216,14 @@ function filterCat(cat, el) {
   el.classList.add("active");
 }
 
-// TRAILER
+// 🎬 BETTER TRAILER
 function playTrailer(title) {
-  const query = encodeURIComponent(title + " trailer");
-  const url = `https://www.youtube.com/embed?listType=search&list=${query}`;
+  const clean = title.replace(/full movie/gi, "").trim();
+  const query = encodeURIComponent(clean + " official trailer");
 
-  document.getElementById("trailer").src = url;
+  document.getElementById("trailer").src =
+    `https://www.youtube.com/embed?listType=search&list=${query}`;
+
   document.getElementById("modal").style.display = "flex";
 }
 
