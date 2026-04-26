@@ -5,27 +5,32 @@
 
   <style>
     body {
-      background:black;
-      color:white;
-      font-family:sans-serif;
-      padding:20px;
+      background: black;
+      color: white;
+      font-family: Arial;
+      padding: 20px;
     }
 
     input, select {
-      padding:8px;
-      margin:5px;
-      width:300px;
+      padding: 8px;
+      margin: 5px;
+      width: 300px;
     }
 
     button {
-      padding:8px 12px;
-      margin:5px;
-      cursor:pointer;
+      padding: 8px 12px;
+      margin: 5px;
+      cursor: pointer;
     }
 
     .movie {
-      border-bottom:1px solid gray;
-      padding:10px;
+      border-bottom: 1px solid gray;
+      padding: 10px;
+    }
+
+    #status {
+      margin-top: 10px;
+      font-weight: bold;
     }
   </style>
 </head>
@@ -34,7 +39,7 @@
 
 <h2>🎛 Admin Panel</h2>
 
-<h3>Add Movie</h3>
+<h3>➕ Add Movie</h3>
 
 <input id="title" placeholder="Movie Title"><br>
 
@@ -50,14 +55,16 @@
 
 <input type="file" id="video"><br>
 
-<button onclick="upload()">Upload</button>
+<button onclick="upload()">Upload Movie</button>
+
+<p id="status"></p>
 
 <hr>
 
-<h3>Manage Movies</h3>
+<h3>🗑 Manage Movies</h3>
 
 <button onclick="deleteAll()" style="background:red;color:white;">
-  Delete All
+  Delete All Movies
 </button>
 
 <div id="list"></div>
@@ -80,21 +87,43 @@ async function loadMovies() {
   });
 }
 
-async function upload() {
+function upload() {
+  const file = document.getElementById("video").files[0];
+  if (!file) return alert("Select a video!");
+
   const form = new FormData();
+  form.append("title", document.getElementById("title").value);
+  form.append("category", document.getElementById("category").value);
+  form.append("language", document.getElementById("language").value);
+  form.append("video", file);
 
-  form.append("title", title.value);
-  form.append("category", category.value);
-  form.append("language", language.value);
-  form.append("video", video.files[0]);
+  const xhr = new XMLHttpRequest();
 
-  await fetch("/api/add-movie", {
-    method: "POST",
-    body: form
-  });
+  xhr.upload.onprogress = function (e) {
+    if (e.lengthComputable) {
+      const percent = Math.round((e.loaded / e.total) * 100);
+      document.getElementById("status").innerText =
+        "Uploading: " + percent + "%";
+    }
+  };
 
-  alert("Uploaded!");
-  loadMovies();
+  xhr.onload = function () {
+    if (xhr.status === 200) {
+      document.getElementById("status").innerText = "✅ Uploaded!";
+      loadMovies();
+    } else {
+      document.getElementById("status").innerText = "❌ Upload failed";
+    }
+  };
+
+  xhr.onerror = function () {
+    document.getElementById("status").innerText = "❌ Network error";
+  };
+
+  xhr.open("POST", "/api/add-movie");
+  xhr.send(form);
+
+  document.getElementById("status").innerText = "Uploading...";
 }
 
 async function deleteMovie(id) {
