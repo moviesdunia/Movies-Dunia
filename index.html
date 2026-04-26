@@ -2,166 +2,76 @@
 <html>
 <head>
   <title>Movies Dunia</title>
-
   <style>
     body {
       margin: 0;
-      background: #141414;
+      background: black;
       color: white;
       font-family: Arial;
     }
 
     header {
+      display: flex;
+      justify-content: space-between;
       padding: 15px;
-      font-size: 24px;
-      font-weight: bold;
       background: black;
     }
 
-    .banner {
-      position: relative;
-      height: 400px;
-      background-size: cover;
-      background-position: center;
-      display: flex;
-      align-items: flex-end;
-      padding: 30px;
-    }
-
-    .banner h1 {
-      font-size: 40px;
-    }
-
-    .row {
-      margin: 20px;
-    }
-
-    .row h2 {
-      margin-bottom: 10px;
+    h1 {
+      color: red;
     }
 
     .movies {
       display: flex;
-      overflow-x: auto;
+      flex-wrap: wrap;
+      gap: 15px;
+      padding: 20px;
     }
 
-    .movie {
-      margin-right: 10px;
-      transition: transform 0.3s;
+    .card {
+      width: 150px;
       cursor: pointer;
     }
 
-    .movie img {
-      width: 150px;
+    .card img {
+      width: 100%;
       border-radius: 5px;
     }
 
-    .movie:hover {
-      transform: scale(1.2);
-    }
-
-    /* VIDEO MODAL */
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.9);
-      justify-content: center;
-      align-items: center;
-    }
-
-    .modal video {
-      width: 80%;
-      max-height: 80%;
-    }
-
-    .close {
-      position: absolute;
-      top: 20px;
-      right: 30px;
-      font-size: 30px;
-      cursor: pointer;
+    .card:hover {
+      transform: scale(1.1);
     }
   </style>
 </head>
 
 <body>
 
-<header>🎬 Movies Dunia</header>
+<header>
+  <h1>Movies Dunia</h1>
+</header>
 
-<!-- HERO BANNER -->
-<div id="banner" class="banner">
-  <h1 id="bannerTitle"></h1>
-</div>
-
-<!-- MOVIE SECTIONS -->
-<div class="row">
-  <h2>🔥 Trending</h2>
-  <div id="trending" class="movies"></div>
-</div>
-
-<div class="row">
-  <h2>🆕 Latest</h2>
-  <div id="latest" class="movies"></div>
-</div>
-
-<!-- VIDEO PLAYER -->
-<div id="modal" class="modal">
-  <span class="close" onclick="closeVideo()">✖</span>
-  <video id="player" controls autoplay></video>
-</div>
+<div class="movies" id="movies"></div>
 
 <script>
 async function loadMovies() {
   const res = await fetch("/api/movies");
-  const movies = await res.json();
+  const data = await res.json();
 
-  if (movies.length > 0) {
-    // HERO BANNER
-    const banner = document.getElementById("banner");
-    banner.style.backgroundImage = `url(${movies[0].poster})`;
-    document.getElementById("bannerTitle").innerText = movies[0].title;
-  }
+  const container = document.getElementById("movies");
+  container.innerHTML = "";
 
-  const trending = document.getElementById("trending");
-  const latest = document.getElementById("latest");
-
-  trending.innerHTML = "";
-  latest.innerHTML = "";
-
-  movies.forEach(m => {
-    const movieCard = `
-      <div class="movie" onclick="playVideo('${m.videoUrl}')">
-        <img src="${m.poster}">
+  data.forEach(movie => {
+    container.innerHTML += `
+      <div class="card" onclick="play('${movie.link}')">
+        <img src="${movie.poster || 'https://via.placeholder.com/150'}">
+        <p>${movie.title}</p>
       </div>
     `;
-
-    if (m.category === "Trending") {
-      trending.innerHTML += movieCard;
-    } else {
-      latest.innerHTML += movieCard;
-    }
   });
 }
 
-function playVideo(url) {
-  const modal = document.getElementById("modal");
-  const player = document.getElementById("player");
-
-  player.src = url;
-  modal.style.display = "flex";
-}
-
-function closeVideo() {
-  const modal = document.getElementById("modal");
-  const player = document.getElementById("player");
-
-  player.pause();
-  player.src = "";
-  modal.style.display = "none";
+function play(link) {
+  window.open(link, "_blank");
 }
 
 loadMovies();
