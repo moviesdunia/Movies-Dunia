@@ -1,124 +1,98 @@
+require("dotenv").config();
+
 const express = require("express");
 const mongoose = require("mongoose");
-const path = require("path");
+const cors = require("cors");
 const multer = require("multer");
-const axios = require("axios");
 const cloudinary = require("cloudinary").v2;
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
-
-const Movie = require("./models/Movie");
 
 const app = express();
+
+// ===== MIDDLEWARE =====
+app.use(cors());
 app.use(express.json());
 
-// ================= DB =================
-mongoose.connect(process.env.MONGO_URL)
-.then(() => console.log("MongoDB Connected"))
-.catch(err => console.log(err));
-
-// ================= CLOUDINARY =================
+// ===== CLOUDINARY CONFIG =====
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.API_KEY,
-  api_secret: process.env.API_SECRET
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET,
 });
 
-const storage = new CloudinaryStorage({
-  cloudinary,
-  params: {
-    resource_type: "video",
-    folder: "movies"
-  }
-});
+// ===== MONGODB CONNECT =====
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.log("Mongo Error:", err));
 
+// ===== MULTER (FILE UPLOAD) =====
+const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// ================= STATIC =================
-app.use(express.static(path.join(__dirname, "../public")));
+// ===== SCHEMA =====
+const movieSchema = new mongoose.Schema({
+  title: String,
+  language: String,
+  videoUrl: String,
+  poster: String,
+  createdAt: { type: Date, default: Date.now }
+});
 
-// ================= TMDB SAFE =================
-async function getMovieDetails(title) {
-  try {
-    if (!process.env.TMDB_KEY) return {};
+const Movie = mongoose.model("Movie", movieSchema);
 
-    const res = await axios.get(
-      "https://api.themoviedb.org/3/search/movie",
-      {
-        params: {
-          api_key: process.env.TMDB_KEY,
-          query: title
-        }
-      }
-    );
+// ===== ROUTES =====
 
-    const movie = res.data.results?.[0];
-    if (!movie) return {};
+// TEST ROUTE
+app.get("/", (req, res) => {
+  res.send("Movies Dunia API Running 🚀");
+});
 
-    return {
-      poster: movie.poster_path
-        ? "https://image.tmdb.org/t/p/w500" + movie.poster_path
-        : "",
-      overview: movie.overview || "",
-      language: movie.original_language || ""
-    };
-
-  } catch (err) {
-    console.log("TMDB error:", err.message);
-    return {};
-  }
-}
-
-// ================= API =================
-
-// GET movies
+// GET ALL MOVIES
 app.get("/api/movies", async (req, res) => {
   try {
     const movies = await Movie.find().sort({ createdAt: -1 });
     res.json(movies);
-  } catch {
-    res.json([]);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 
-// UPLOAD
+// UPLOAD MOVIE
 app.post("/api/upload", upload.single("video"), async (req, res) => {
   try {
-    const details = await getMovieDetails(req.body.title);
+    const { title, language } = req.body;
 
-    const movie = new Movie({
-      title: req.body.title,
-      category: req.body.category || "Trending",
-      videoUrl: req.file.path,
-      poster: details.poster || "https://via.placeholder.com/300x450",
-      overview: details.overview,
-      language: details.language
+    if (!req.file) {
+      return res.status(400).json({ error: "No video uploaded" });
+    }
+
+    // Upload to Cloudinary
+    const result = await new Promise((resolve, reject) => {
+      cloudinary.uploader.upload_stream(
+        { resource_type: "video" },
+        (error, result) => {
+          if (error) reject(error);
+          else resolve(result);
+        }
+      ).end(req.file.buffer);
     });
 
-    await movie.save();
+    const newMovie = new Movie({
+      title,
+      language,
+      videoUrl: result.secure_url,
+      poster: "https://via.placeholder.com/300x450"
+    });
 
-    res.json({ message: "Uploaded" });
+    await newMovie.save();
+
+    res.json({ message: "Uploaded successfully", movie: newMovie });
 
   } catch (err) {
     console.log(err);
-    res.status(500).json({ error: "Upload failed" });
+    res.status(500).json({ error: err.message });
   }
 });
 
-// DELETE
-app.delete("/api/movies/:id", async (req, res) => {
-  await Movie.findByIdAndDelete(req.params.id);
-  res.json({ message: "Deleted" });
-});
-
-// ================= ROUTES =================
-app.get("/admin", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/admin.html"));
-});
-
-app.get("/player", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/player.html"));
-});
-
-// ================= START =================
+// ===== START SERVER =====
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log("Server running"));
+app.listen(PORT, () => console.log("Server running on port", PORT));
