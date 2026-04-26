@@ -9,8 +9,8 @@ app.use(express.json());
 
 // ✅ MongoDB Connection
 mongoose.connect(process.env.MONGO_URI)
-.then(() => console.log("MongoDB Connected"))
-.catch(err => console.log(err));
+  .then(() => console.log("MongoDB Connected"))
+  .catch(err => console.log(err));
 
 // ✅ Movie Schema
 const Movie = mongoose.model("Movie", {
@@ -29,8 +29,12 @@ app.get('/', (req, res) => {
 
 // ✅ Get Movies API
 app.get('/api/movies', async (req, res) => {
-  const movies = await Movie.find().sort({ createdAt: -1 });
-  res.json(movies);
+  try {
+    const movies = await Movie.find().sort({ createdAt: -1 });
+    res.json(movies);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch movies" });
+  }
 });
 
 // ✅ Telegram Webhook
@@ -46,19 +50,21 @@ app.post('/webhook', async (req, res) => {
       let poster = "";
       let rating = "N/A";
 
+      // 🎬 Fetch movie data from OMDB
       try {
         const response = await axios.get(
           `https://www.omdbapi.com/?t=${encodeURIComponent(text)}&apikey=eee94f23`
         );
 
         if (response.data && response.data.Response === "True") {
-          poster = response.data.Poster;
-          rating = response.data.imdbRating;
+          poster = response.data.Poster !== "N/A" ? response.data.Poster : "";
+          rating = response.data.imdbRating !== "N/A" ? response.data.imdbRating : "N/A";
         }
       } catch (err) {
         console.log("OMDB Error:", err.message);
       }
 
+      // 🎯 Category detection
       let category = "Other";
       const lower = text.toLowerCase();
 
@@ -66,9 +72,18 @@ app.post('/webhook', async (req, res) => {
       else if (lower.includes("tamil")) category = "Tamil";
       else if (lower.includes("bengali")) category = "Bengali";
 
+      // ✅ CREATE TELEGRAM POST LINK (IMPORTANT FIX)
+      const username = message.chat.username;
+      const messageId = message.message_id;
+
+      const postLink = username
+        ? `https://t.me/${username}/${messageId}`
+        : "https://t.me/moviesurequired";
+
+      // 💾 Save to DB
       await Movie.create({
         title: text,
-        link: message.link || "https://t.me/moviesurequired",
+        link: postLink,
         poster,
         category,
         rating
