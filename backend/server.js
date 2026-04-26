@@ -68,7 +68,7 @@ app.post('/webhook', async (req, res) => {
 
       await Movie.create({
         title: text,
-        link: "https://t.me/MoviesUNeed",
+        link: "https://t.me/moviesurequired",
         poster,
         category,
         rating
