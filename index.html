@@ -13,7 +13,6 @@ body {
   color: white;
 }
 
-/* Header */
 header {
   background: #000;
   padding: 15px;
@@ -37,6 +36,27 @@ input {
   outline: none;
 }
 
+/* Category Buttons */
+.categories {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  overflow-x: auto;
+}
+
+.categories button {
+  padding: 8px 15px;
+  border: none;
+  border-radius: 20px;
+  background: #333;
+  color: white;
+  cursor: pointer;
+}
+
+.categories button.active {
+  background: red;
+}
+
 /* Grid */
 .movies {
   display: grid;
@@ -56,7 +76,6 @@ input {
   transform: scale(1.05);
 }
 
-/* Poster */
 .card img {
   width: 100%;
   height: 220px;
@@ -74,19 +93,17 @@ input {
   border-radius: 8px;
 }
 
-/* Title */
 .title {
   font-size: 14px;
   font-weight: bold;
 }
 
-/* Rating */
 .rating {
   font-size: 12px;
   color: gold;
 }
 
-/* Play Button */
+/* Play button */
 .play {
   position: absolute;
   top: 40%;
@@ -112,12 +129,21 @@ input {
   <input type="text" id="search" placeholder="Search movies...">
 </div>
 
+<!-- 🎯 Category Filter -->
+<div class="categories">
+  <button onclick="filterCategory('All')" class="active">All</button>
+  <button onclick="filterCategory('Hindi')">Hindi</button>
+  <button onclick="filterCategory('Tamil')">Tamil</button>
+  <button onclick="filterCategory('Bengali')">Bengali</button>
+</div>
+
 <div class="movies" id="movies"></div>
 
 <script>
 const API = "https://movies-dunia-1.onrender.com/api/movies";
 
 let allMovies = [];
+let currentCategory = "All";
 
 async function loadMovies() {
   const res = await fetch(API);
@@ -138,9 +164,7 @@ function displayMovies(movies) {
     container.innerHTML += `
       <div class="card" onclick="openMovie('${movie.link}')">
         <img src="${poster}">
-        
         <div class="play">▶</div>
-
         <div class="overlay">
           <div class="title">${movie.title}</div>
           <div class="rating">⭐ ${movie.rating || "N/A"}</div>
@@ -154,16 +178,37 @@ function openMovie(link) {
   window.open(link, "_blank");
 }
 
-// 🔍 Search
+/* 🔍 Search */
 document.getElementById("search").addEventListener("input", function() {
-  const value = this.value.toLowerCase();
+  applyFilters();
+});
 
-  const filtered = allMovies.filter(m =>
-    m.title.toLowerCase().includes(value)
-  );
+/* 🎯 Category Filter */
+function filterCategory(category) {
+  currentCategory = category;
+
+  // Highlight active button
+  document.querySelectorAll(".categories button").forEach(btn => {
+    btn.classList.remove("active");
+  });
+
+  event.target.classList.add("active");
+
+  applyFilters();
+}
+
+/* 🔥 Apply both search + category */
+function applyFilters() {
+  const searchValue = document.getElementById("search").value.toLowerCase();
+
+  let filtered = allMovies.filter(movie => {
+    const matchSearch = movie.title.toLowerCase().includes(searchValue);
+    const matchCategory = currentCategory === "All" || movie.category === currentCategory;
+    return matchSearch && matchCategory;
+  });
 
   displayMovies(filtered);
-});
+}
 
 loadMovies();
 </script>
