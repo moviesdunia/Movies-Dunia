@@ -1,69 +1,44 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Admin Panel</title>
+  <title>Admin</title>
+  <style>
+    body {
+      background: black;
+      color: white;
+      font-family: Arial;
+    }
+    h1 { color: red; }
 
-<style>
-body {
-  background: #111;
-  color: white;
-  font-family: Arial;
-  padding: 20px;
-}
+    input {
+      display: block;
+      width: 300px;
+      margin: 10px 0;
+      padding: 10px;
+    }
 
-h1 {
-  color: red;
-}
-
-input, select {
-  padding: 10px;
-  margin: 5px 0;
-  width: 100%;
-  border-radius: 5px;
-  border: none;
-}
-
-button {
-  padding: 10px;
-  margin-top: 10px;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-}
-
-.upload {
-  background: red;
-  color: white;
-}
-
-.delete {
-  background: black;
-  color: red;
-  border: 1px solid red;
-}
-
-.status {
-  margin-top: 10px;
-  color: lightgreen;
-}
-</style>
+    button {
+      padding: 10px;
+      margin: 5px;
+      cursor: pointer;
+    }
+  </style>
 </head>
-
 <body>
 
-<h1>🎬 Movies Dunia Admin</h1>
+<h1>Movies Dunia Admin</h1>
 
 <input id="title" placeholder="Movie Title">
-<input id="link" placeholder="Movie Link (Telegram / Video)">
-<input id="category" placeholder="Category (Action / Hindi / Tamil)">
+<input id="link" placeholder="Movie Link">
+<input id="category" placeholder="Category">
 
-<button class="upload" onclick="uploadMovie()">Upload Movie</button>
-<button class="delete" onclick="deleteAll()">Delete All Movies</button>
+<button onclick="upload()">Upload Movie</button>
+<button onclick="deleteAll()">Delete All</button>
 
-<div class="status" id="status"></div>
+<p id="status"></p>
 
 <script>
-async function uploadMovie() {
+async function upload() {
   const title = document.getElementById("title").value;
   const link = document.getElementById("link").value;
   const category = document.getElementById("category").value;
@@ -71,39 +46,23 @@ async function uploadMovie() {
   document.getElementById("status").innerText = "Uploading...";
 
   try {
-    const res = await fetch("/api/add-movie", {
+    const res = await fetch("/api/movies", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, link, category })
     });
 
     const data = await res.json();
-
-    if (data.success) {
-      document.getElementById("status").innerText = "✅ Uploaded successfully";
-    } else {
-      document.getElementById("status").innerText = "❌ Upload failed";
-    }
+    document.getElementById("status").innerText = data.message;
 
   } catch (err) {
-    document.getElementById("status").innerText = "❌ Error uploading";
-    console.error(err);
+    document.getElementById("status").innerText = "Upload Failed!";
   }
 }
 
 async function deleteAll() {
-  if (!confirm("Delete all movies?")) return;
-
-  document.getElementById("status").innerText = "Deleting...";
-
-  try {
-    await fetch("/api/delete-all", { method: "DELETE" });
-    document.getElementById("status").innerText = "🗑 All movies deleted";
-  } catch (err) {
-    document.getElementById("status").innerText = "❌ Error deleting";
-  }
+  await fetch("/api/movies", { method: "DELETE" });
+  alert("All movies deleted");
 }
 </script>
 
