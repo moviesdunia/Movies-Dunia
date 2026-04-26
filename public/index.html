@@ -7,20 +7,41 @@
       background: black;
       color: white;
       font-family: Arial;
+      margin: 0;
     }
+
     h1 {
       color: red;
+      padding: 15px;
     }
-    .movie {
-      margin: 20px 0;
+
+    .movies {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      padding: 15px;
     }
+
+    .card {
+      background: #111;
+      padding: 10px;
+      border-radius: 10px;
+    }
+
     video {
-      width: 300px;
+      width: 100%;
+      border-radius: 8px;
     }
-    a {
-      color: yellow;
-      display: block;
+
+    button {
       margin-top: 5px;
+      width: 100%;
+      padding: 8px;
+      background: red;
+      border: none;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
     }
   </style>
 </head>
@@ -29,45 +50,43 @@
 
 <h1>Movies Dunia</h1>
 
-<div id="movies">Loading...</div>
+<div class="movies" id="movies"></div>
 
 <script>
-const API = "https://movies-dunia-1.onrender.com"; // 👈 YOUR LIVE URL
+const API = "https://movies-dunia-1.onrender.com/api/movies";
 
 async function loadMovies() {
   try {
-    const res = await fetch(API + "/api/movies");
+    const res = await fetch(API);
     const data = await res.json();
 
     const container = document.getElementById("movies");
-    container.innerHTML = "";
 
     if (data.length === 0) {
       container.innerHTML = "<h3>No Movies Yet</h3>";
       return;
     }
 
-    data.forEach(movie => {
-      const div = document.createElement("div");
-      div.className = "movie";
-
-      div.innerHTML = `
+    container.innerHTML = data.map(movie => `
+      <div class="card">
         <h3>${movie.title}</h3>
-
-        <video controls>
-          <source src="${movie.videoUrl}" type="video/mp4">
-        </video>
-
-        <a href="${movie.videoUrl}" download>⬇ Download</a>
-      `;
-
-      container.appendChild(div);
-    });
+        <video controls src="${movie.videoUrl}"></video>
+        <button onclick="downloadVideo('${movie.videoUrl}')">
+          Download
+        </button>
+      </div>
+    `).join("");
 
   } catch (err) {
-    document.getElementById("movies").innerHTML = "Error loading movies";
-    console.error(err);
+    console.log(err);
   }
+}
+
+function downloadVideo(url) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "movie.mp4";
+  a.click();
 }
 
 loadMovies();
