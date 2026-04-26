@@ -1,113 +1,139 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Admin Panel</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Panel</title>
 
-  <style>
-    body {
-      font-family: Arial;
-      background: #111;
-      color: white;
-      padding: 20px;
-    }
+<style>
+body {
+  font-family: Arial;
+  background: #111;
+  color: white;
+  text-align: center;
+}
 
-    h2 {
-      text-align: center;
-    }
+.box {
+  margin: 50px auto;
+  width: 300px;
+}
 
-    input, select {
-      display: block;
-      margin: 10px 0;
-      padding: 10px;
-      width: 100%;
-      border-radius: 5px;
-      border: none;
-    }
+input {
+  width: 100%;
+  padding: 10px;
+  margin: 5px 0;
+}
 
-    button {
-      padding: 10px;
-      width: 100%;
-      margin-top: 10px;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-    }
+button {
+  padding: 10px;
+  background: red;
+  color: white;
+  border: none;
+  width: 100%;
+  margin-top: 5px;
+}
 
-    .add-btn {
-      background: green;
-      color: white;
-    }
-
-    .delete-btn {
-      background: red;
-      color: white;
-    }
-  </style>
+.movie {
+  background: #222;
+  padding: 10px;
+  margin: 10px;
+}
+</style>
 </head>
 
 <body>
 
-<h2>🎬 Admin Panel</h2>
+<div class="box" id="loginBox">
+  <h2>Admin Login</h2>
+  <input id="user" placeholder="Username">
+  <input id="pass" type="password" placeholder="Password">
+  <button onclick="login()">Login</button>
+</div>
 
-<input id="title" placeholder="Movie Title">
-<input id="link" placeholder="Telegram Link">
-<input id="poster" placeholder="Poster URL">
-<input id="rating" placeholder="Rating">
+<div id="panel" style="display:none;">
+  <h2>Admin Panel</h2>
 
-<select id="category">
-  <option>Hindi</option>
-  <option>Tamil</option>
-  <option>Bengali</option>
-  <option>Other</option>
-</select>
+  <input id="title" placeholder="Title">
+  <input id="link" placeholder="Telegram Link">
+  <input id="poster" placeholder="Poster URL">
+  <input id="trailer" placeholder="Trailer URL">
+  <input id="rating" placeholder="Rating">
 
-<button class="add-btn" onclick="addMovie()">➕ Add Movie</button>
+  <button onclick="addMovie()">Add Movie</button>
 
-<button class="delete-btn" onclick="deleteAll()">🗑 Delete All Movies</button>
+  <h3>All Movies</h3>
+  <div id="movies"></div>
+</div>
 
 <script>
 const API = "https://movies-dunia-1.onrender.com";
 
-// ➕ Add Movie
-async function addMovie() {
-  const data = {
-    title: document.getElementById("title").value,
-    link: document.getElementById("link").value,
-    poster: document.getElementById("poster").value,
-    rating: document.getElementById("rating").value,
-    category: document.getElementById("category").value
-  };
+/* LOGIN */
+async function login() {
+  const username = document.getElementById("user").value;
+  const password = document.getElementById("pass").value;
 
-  const res = await fetch(API + "/api/add-movie", {
+  const res = await fetch(API + "/api/login", {
     method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(data)
-  });
-
-  const result = await res.json();
-
-  if (result.success) {
-    alert("Movie Added ✅");
-  } else {
-    alert("Error ❌");
-  }
-}
-
-// 🗑 Delete All
-async function deleteAll() {
-  const confirmDelete = confirm("Are you sure? This will delete ALL movies!");
-
-  if (!confirmDelete) return;
-
-  const res = await fetch(API + "/api/delete-all", {
-    method: "DELETE"
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify({ username, password })
   });
 
   const data = await res.json();
-  alert(data.message);
+
+  if (data.success) {
+    document.getElementById("loginBox").style.display = "none";
+    document.getElementById("panel").style.display = "block";
+    loadMovies();
+  } else {
+    alert("Wrong login");
+  }
+}
+
+/* LOAD */
+async function loadMovies() {
+  const res = await fetch(API + "/api/movies");
+  const data = await res.json();
+
+  const container = document.getElementById("movies");
+  container.innerHTML = "";
+
+  data.forEach(m => {
+    container.innerHTML += `
+      <div class="movie">
+        <b>${m.title}</b><br>
+        ⭐ ${m.rating || "N/A"}<br>
+        <button onclick="deleteMovie('${m._id}')">Delete</button>
+      </div>
+    `;
+  });
+}
+
+/* ADD */
+async function addMovie() {
+  const movie = {
+    title: document.getElementById("title").value,
+    link: document.getElementById("link").value,
+    poster: document.getElementById("poster").value,
+    trailer: document.getElementById("trailer").value,
+    rating: document.getElementById("rating").value
+  };
+
+  await fetch(API + "/api/add-movie", {
+    method: "POST",
+    headers: {"Content-Type":"application/json"},
+    body: JSON.stringify(movie)
+  });
+
+  alert("Added!");
+  loadMovies();
+}
+
+/* DELETE */
+async function deleteMovie(id) {
+  await fetch(API + "/api/delete/" + id, {
+    method: "DELETE"
+  });
+
+  loadMovies();
 }
 </script>
 
