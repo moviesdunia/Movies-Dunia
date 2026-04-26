@@ -7,12 +7,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// ✅ MongoDB Connection
+// ✅ MongoDB
 mongoose.connect(process.env.MONGO_URI)
 .then(() => console.log("MongoDB Connected"))
 .catch(err => console.log(err));
 
-// ✅ Movie Schema
+// ✅ Schema
 const Movie = mongoose.model("Movie", {
   title: String,
   link: String,
@@ -22,55 +22,54 @@ const Movie = mongoose.model("Movie", {
   createdAt: { type: Date, default: Date.now }
 });
 
-// ✅ Home Route
+// ✅ Routes
 app.get('/', (req, res) => {
   res.send("Backend Working 🚀");
 });
 
-// ✅ Get Movies
+// GET movies
 app.get('/api/movies', async (req, res) => {
   const movies = await Movie.find().sort({ createdAt: -1 });
   res.json(movies);
 });
 
-// ✅ Add Movie (Admin Panel)
+// ADD movie manually (admin panel)
 app.post('/api/add-movie', async (req, res) => {
   try {
     const { title, link, poster, category, rating } = req.body;
 
-    const movie = await Movie.create({
-      title,
-      link,
-      poster,
-      category,
-      rating
-    });
+    await Movie.create({ title, link, poster, category, rating });
 
-    res.json({ success: true, movie });
-  } catch (err) {
-    console.log(err);
+    res.json({ success: true });
+  } catch {
     res.json({ success: false });
   }
 });
 
-// ❌ DELETE ALL MOVIES (NEW FEATURE)
+// DELETE all movies
 app.delete('/api/delete-all', async (req, res) => {
-  try {
-    await Movie.deleteMany({});
-    res.json({ success: true, message: "All movies deleted successfully ✅" });
-  } catch (err) {
-    console.log(err);
-    res.json({ success: false, message: "Error deleting movies ❌" });
-  }
+  await Movie.deleteMany({});
+  res.json({ message: "All movies deleted ✅" });
 });
 
-// ✅ Telegram Webhook
+// ✅ TELEGRAM WEBHOOK (IMPROVED)
 app.post('/webhook', async (req, res) => {
   try {
     const message = req.body.channel_post || req.body.message;
 
-    if (message && message.text && message.text.length > 3) {
-      const text = message.text;
+    if (message && message.text) {
+
+      let text = message.text;
+
+      // 🔥 CLEAN TITLE
+      text = text
+        .replace(/full movie/gi, "")
+        .replace(/download/gi, "")
+        .replace(/hindi/gi, "")
+        .replace(/tamil/gi, "")
+        .replace(/hd/gi, "")
+        .replace(/\./g, " ")
+        .trim();
 
       let poster = "";
       let rating = "N/A";
@@ -81,11 +80,11 @@ app.post('/webhook', async (req, res) => {
         );
 
         if (response.data && response.data.Response === "True") {
-          poster = response.data.Poster;
+          poster = response.data.Poster !== "N/A" ? response.data.Poster : "";
           rating = response.data.imdbRating;
         }
       } catch (err) {
-        console.log("OMDB Error:", err.message);
+        console.log("OMDB error:", err.message);
       }
 
       let category = "Other";
@@ -113,6 +112,6 @@ app.post('/webhook', async (req, res) => {
   }
 });
 
-// ✅ Start Server
+// START
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => console.log("Server running on " + PORT));
