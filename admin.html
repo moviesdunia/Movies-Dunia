@@ -2,30 +2,88 @@
 <html>
 <head>
   <title>Admin Panel</title>
+
+  <style>
+    body {
+      background: black;
+      color: white;
+      font-family: Arial;
+      padding: 20px;
+    }
+
+    input, select {
+      padding: 8px;
+      margin: 5px 0;
+      width: 300px;
+    }
+
+    button {
+      padding: 8px 12px;
+      margin: 5px;
+      cursor: pointer;
+    }
+
+    .movie {
+      border-bottom: 1px solid gray;
+      padding: 10px;
+    }
+  </style>
 </head>
-<body style="background:black;color:white;font-family:sans-serif">
 
-<h2>Add Movie</h2>
+<body>
 
-<input placeholder="Title" id="title"><br><br>
-<input placeholder="Poster URL (TMDB)" id="poster"><br><br>
+<h2>🎛 Admin Panel</h2>
+
+<h3>➕ Add Movie</h3>
+
+<input id="title" placeholder="Movie Title"><br>
+<input id="poster" placeholder="Poster URL (TMDB)"><br>
 
 <select id="category">
   <option>Trending</option>
   <option>Latest</option>
-</select><br><br>
+</select><br>
 
 <select id="language">
   <option>Hindi</option>
-  <option>Tamil</option>
   <option>English</option>
-</select><br><br>
+  <option>Tamil</option>
+</select><br>
 
-<input type="file" id="video"><br><br>
+<input type="file" id="video"><br>
 
-<button onclick="upload()">Upload</button>
+<button onclick="upload()">Upload Movie</button>
+
+<hr>
+
+<h3>🗑 Manage Movies</h3>
+
+<button onclick="deleteAll()" style="background:red;color:white;">
+  Delete All Movies
+</button>
+
+<div id="moviesList"></div>
+
 
 <script>
+async function loadMovies() {
+  const res = await fetch("/api/movies");
+  const data = await res.json();
+
+  const container = document.getElementById("moviesList");
+  container.innerHTML = "";
+
+  data.forEach(m => {
+    container.innerHTML += `
+      <div class="movie">
+        <b>${m.title}</b><br>
+        <small>${m.category} | ${m.language}</small><br>
+        <button onclick="deleteMovie('${m._id}')">Delete</button>
+      </div>
+    `;
+  });
+}
+
 async function upload() {
   const form = new FormData();
 
@@ -40,8 +98,23 @@ async function upload() {
     body: form
   });
 
-  alert("Uploaded!");
+  alert("Movie Uploaded!");
+  loadMovies();
 }
+
+async function deleteMovie(id) {
+  await fetch(`/api/delete/${id}`, { method: "DELETE" });
+  loadMovies();
+}
+
+async function deleteAll() {
+  if (!confirm("Are you sure you want to delete ALL movies?")) return;
+
+  await fetch("/api/delete-all", { method: "DELETE" });
+  loadMovies();
+}
+
+loadMovies();
 </script>
 
 </body>
