@@ -1,18 +1,164 @@
-<div id="download-section" style="margin-top: 20px;">
-    <a id="download-btn" href="#" download style="background: #e50914; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; font-weight: bold;">
-        📥 Download Movie
-    </a>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movies Dunia | 2026 Upcoming Trailers</title>
+    <style>
+        :root { --red: #e50914; --bg: #0a0a0a; --gray: #1a1a1a; }
+        body { background: var(--bg); color: white; font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; overflow-x: hidden; }
+        
+        /* Navigation */
+        nav { padding: 20px 5%; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(rgba(0,0,0,0.9), transparent); position: fixed; width: 100%; z-index: 100; box-sizing: border-box; }
+        .logo { color: var(--red); font-weight: bold; text-decoration: none; font-size: 1.8rem; letter-spacing: 1px; }
+        .admin-link { color: white; text-decoration: none; font-size: 0.8rem; border: 1px solid #444; padding: 6px 15px; border-radius: 4px; transition: 0.3s; }
+        .admin-link:hover { background: white; color: black; }
+
+        /* Hero Section */
+        .hero { height: 45vh; background: linear-gradient(to top, var(--bg), transparent), url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1000') center/cover; display: flex; align-items: flex-end; padding: 0 5% 40px; }
+        .hero-text h1 { margin: 0; font-size: 3rem; text-shadow: 2px 2px 10px rgba(0,0,0,0.5); }
+        .hero-text p { color: #ccc; font-size: 1.1rem; max-width: 600px; }
+
+        /* Rows */
+        .row { padding: 30px 0 0 5%; }
+        .row-title { font-size: 1.4rem; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; }
+        .row-title span { color: var(--red); }
+        
+        .movie-list { display: flex; overflow-x: auto; gap: 15px; padding: 10px 0 30px; scrollbar-width: none; min-height: 250px; }
+        .movie-list::-webkit-scrollbar { display: none; }
+
+        /* Movie Cards */
+        .card { min-width: 170px; height: 255px; background: var(--gray); border-radius: 8px; cursor: pointer; transition: 0.4s cubic-bezier(0.2, 0, 0.2, 1); overflow: hidden; position: relative; border: 1px solid #222; }
+        .card:hover { transform: scale(1.05); border-color: var(--red); z-index: 10; box-shadow: 0 10px 20px rgba(0,0,0,0.5); }
+        .card img { width: 100%; height: 100%; object-fit: cover; }
+        .card-info { position: absolute; bottom: 0; width: 100%; padding: 20px 10px 10px; background: linear-gradient(transparent, rgba(0,0,0,0.9)); font-size: 0.75rem; box-sizing: border-box; opacity: 0; transition: 0.3s; }
+        .card:hover .card-info { opacity: 1; }
+
+        /* Modal Player */
+        #trailerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; align-items:center; justify-content:center; }
+        .close-btn { position:absolute; top:20px; right:30px; color:white; background:none; border:none; font-size:3.5rem; cursor:pointer; line-height: 1; }
+        #videoContainer { width:90%; max-width:1100px; aspect-ratio:16/9; background:#000; box-shadow: 0 0 50px #000; }
+    </style>
+</head>
+<body>
+
+<nav>
+    <a href="/" class="logo">MOVIES DUNIA</a>
+    <a href="/admin.html" class="admin-link">Admin Panel</a>
+</nav>
+
+<section class="hero">
+    <div class="hero-text">
+        <h1>Upcoming Blockbusters</h1>
+        <p>Your destination for the latest 2026 Hindi, Bengali, and Hollywood trailers.</p>
+    </div>
+</section>
+
+<div class="row">
+    <div class="row-title"><span>🎬</span> Your Library</div>
+    <div id="library-list" class="movie-list"></div>
+</div>
+
+<div class="row">
+    <div class="row-title"><span>🇮🇳</span> Upcoming Desi Series</div>
+    <div id="indian-series" class="movie-list"></div>
+</div>
+
+<div class="row">
+    <div class="row-title"><span>🇮🇳</span> Upcoming Desi Movies</div>
+    <div id="indian-movies" class="movie-list"></div>
+</div>
+
+<div class="row">
+    <div class="row-title"><span>🌎</span> Global Future Hits</div>
+    <div id="global-hits" class="movie-list"></div>
+</div>
+
+<div id="trailerModal">
+    <button class="close-btn" onclick="closeTrailer()">&times;</button>
+    <div id="videoContainer"></div>
 </div>
 
 <script>
-    // Inside your existing load() function:
-    if(movie) {
-        document.getElementById('m-title').innerText = movie.title;
-        document.getElementById('m-video').src = movie.videoUrl;
-        
-        // Set the download link to the Cloudinary URL
-        const dlBtn = document.getElementById('download-btn');
-        dlBtn.href = movie.videoUrl;
+    let TMDB_KEY = "";
+    // Standard 2026 Filter: Only content releasing from April 2026 onwards
+    const START_DATE = "2026-04-01";
+
+    async function init() {
+        try {
+            // 1. Get API Key from Backend
+            const configRes = await fetch("/api/config/tmdb");
+            const configData = await configRes.json();
+            TMDB_KEY = configData.apiKey;
+
+            // 2. Load User Uploaded Movies
+            const libRes = await fetch("/api/movies");
+            const libMovies = await libRes.json();
+            const libList = document.getElementById('library-list');
+            if(libMovies.length === 0) libList.innerHTML = "<p style='color:#444; padding:20px;'>Upload movies in Admin to see them here.</p>";
+            libMovies.forEach(m => {
+                libList.innerHTML += `<div class="card" onclick="window.location.href='player.html?id=${m._id}'"><img src="${m.poster}"></div>`;
+            });
+
+            if (TMDB_KEY) {
+                // 3. Fetch Desi Web Series (Hindi/Bengali)
+                fetchTrailersOnly(`https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_KEY}&with_original_language=hi|bn&first_air_date.gte=${START_DATE}&sort_by=popularity.desc`, 'indian-series', 'tv');
+
+                // 4. Fetch Desi Movies (Hindi/Bengali)
+                fetchTrailersOnly(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&region=IN&with_original_language=hi|bn&primary_release_date.gte=${START_DATE}&sort_by=primary_release_date.asc`, 'indian-movies', 'movie');
+
+                // 5. Fetch Global (English)
+                fetchTrailersOnly(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&primary_release_date.gte=${START_DATE}&sort_by=popularity.desc`, 'global-hits', 'movie');
+            }
+        } catch (err) { console.error("Init Error", err); }
     }
-</script
-    >
+
+    async function fetchTrailersOnly(apiUrl, elementId, type) {
+        try {
+            const res = await fetch(apiUrl);
+            const data = await res.json();
+            const container = document.getElementById(elementId);
+            
+            let count = 0;
+            for (const item of data.results) {
+                if (count >= 15) break; 
+
+                // Fetch video data
+                const vRes = await fetch(`https://api.themoviedb.org/3/${type}/${item.id}/videos?api_key=${TMDB_KEY}`);
+                const vData = await vRes.json();
+                
+                // Prioritize "Trailer", then "Teaser"
+                const trailer = vData.results.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
+
+                if (trailer && item.poster_path) {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.onclick = () => playTrailer(trailer.key);
+                    card.innerHTML = `
+                        <img src="https://image.tmdb.org/t/p/w500${item.poster_path}" loading="lazy">
+                        <div class="card-info"><b>${item.name || item.title}</b></div>
+                    `;
+                    container.appendChild(card);
+                    count++;
+                }
+            }
+            if(count === 0) container.innerHTML = "<p style='color:#333; padding:20px;'>More trailers coming soon...</p>";
+        } catch(e) { console.error("Fetch Error", e); }
+    }
+
+    function playTrailer(key) {
+        const container = document.getElementById('videoContainer');
+        // Standard YouTube embed format
+        container.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${key}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
+        document.getElementById('trailerModal').style.display = 'flex';
+    }
+
+    function closeTrailer() {
+        document.getElementById('trailerModal').style.display = 'none';
+        document.getElementById('videoContainer').innerHTML = '';
+    }
+
+    init();
+</script>
+</body>
+</html>
