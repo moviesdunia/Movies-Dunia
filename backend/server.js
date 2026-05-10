@@ -62,9 +62,8 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Fixed the Syntax Error here:
+// Using standard strings to prevent any template literal SyntaxErrors
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-    console.log(`🚀 Server running on port ${PO
-                                            RT}`);
+    console.log('🚀 Server running on port ' + PORT);
 });
