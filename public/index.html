@@ -40,13 +40,13 @@
 </div>
 
 <div class="row">
-    <div class="row-title">🇮🇳 Trending Hindi & Bengali</div>
-    <div id="indian-trending" class="movie-list"><div class="loading-shimmer">Scanning trailers...</div></div>
+    <div class="row-title">📺 Indian Web Series (Hindi/Bengali)</div>
+    <div id="indian-series" class="movie-list"><div class="loading-shimmer">Scanning series trailers...</div></div>
 </div>
 
 <div class="row">
-    <div class="row-title">🆕 Upcoming (2025-2026)</div>
-    <div id="indian-upcoming" class="movie-list"><div class="loading-shimmer">Finding new releases...</div></div>
+    <div class="row-title">🇮🇳 Trending Movies</div>
+    <div id="indian-trending" class="movie-list"><div class="loading-shimmer">Scanning movie trailers...</div></div>
 </div>
 
 <div class="row">
@@ -61,7 +61,6 @@
 
 <script>
     let TMDB_KEY = "";
-    // Today's date to filter out old movies
     const TODAY = new Date().toISOString().split('T')[0];
 
     async function init() {
@@ -79,14 +78,13 @@
             });
 
             if (TMDB_KEY) {
-                // 2. Trending Indian (Hindi + Bengali)
-                // We use 'discover' to force original_language=hi|bn and sort by popularity
+                // 2. Fetch Desi Web Series (TV)
+                fetchTrailersOnly(`https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_KEY}&with_original_language=hi|bn&sort_by=popularity.desc&first_air_date.gte=2024-01-01`, 'indian-series', 'tv');
+
+                // 3. Fetch Trending Desi Movies
                 fetchTrailersOnly(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&with_original_language=hi|bn&sort_by=popularity.desc&region=IN`, 'indian-trending', 'movie');
 
-                // 3. Upcoming Indian (Released after today)
-                fetchTrailersOnly(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&region=IN&with_original_language=hi|bn&primary_release_date.gte=${TODAY}&sort_by=primary_release_date.asc`, 'indian-upcoming', 'movie');
-
-                // 4. Global Hits (English)
+                // 4. Fetch Global Hits
                 fetchTrailersOnly(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&with_original_language=en&sort_by=popularity.desc`, 'global-hits', 'movie');
             }
         } catch (err) { console.error("Init Error", err); }
@@ -100,17 +98,20 @@
 
         let count = 0;
         for (const item of data.results) {
-            if (count >= 15) break; // Limit to 15 posters per row
+            if (count >= 15) break; 
 
+            // IMPORTANT: TV and Movie use different video endpoints
             const vRes = await fetch(`https://api.themoviedb.org/3/${type}/${item.id}/videos?api_key=${TMDB_KEY}`);
             const vData = await vRes.json();
+            
+            // Check for official trailer or teaser on YouTube
             const trailer = vData.results.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
 
             if (trailer && item.poster_path) {
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.onclick = () => playTrailer(trailer.key);
-                card.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${item.poster_path}" alt="${item.title}" loading="lazy">`;
+                card.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${item.poster_path}" alt="${item.name || item.title}" loading="lazy">`;
                 container.appendChild(card);
                 count++;
             }
