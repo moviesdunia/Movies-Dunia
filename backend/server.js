@@ -1,91 +1,69 @@
-const express = require("express");
-const mongoose = require("mongoose");
-const cors = require("cors");
-const dotenv = require("dotenv");
-const multer = require("multer");
-const path = require("path");
-const cloudinary = require("cloudinary").v2;
-const { CloudinaryStorage } = require("multer-storage-cloudinary");
-const Movie = require("./models/Movie");
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+const path = require('path');
+require('dotenv').config();
 
-dotenv.config();
 const app = express();
 
-// Cloudinary Setup
-cloudinary.config({
-  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "../public")));
+app.use(express.static('public'));
 
 // MongoDB Connection
-mongoose.connect(process.env.MONGO_URI || "")
-  .then(() => console.log("✅ MongoDB Connected"))
-  .catch((err) => console.error("❌ MongoDB Error:", err.message));
+mongoose.connect(process.env.MONGO_URI)
+    .then(() => console.log('✅ MongoDB Connected'))
+    .catch(err => console.error('❌ MongoDB Connection Error:', err));
 
-// Multer Storage for Cloudinary
-const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
-  params: async (req, file) => ({
-    folder: "movies_dunia",
-    resource_type: file.mimetype.startsWith("video") ? "video" : "image",
-    public_id: file.originalname.split('.')[0] + "_" + Date.now(),
-  }),
+// Movie Schema
+const movieSchema = new mongoose.Schema({
+    title: String,
+    videoUrl: String,
+    poster: String,
+    category: String,
+    createdAt: { type: Date, default: Date.now }
 });
-const upload = multer({ storage: storage });
+const Movie = mongoose.model('Movie', movieSchema);
 
-// --- ROUTES ---
+// --- API ROUTES ---
 
-// 1. Send TMDB Key to Frontend securely
-app.get("/api/config/tmdb", (req, res) => {
-  res.json({ apiKey: process.env.TMDB_API_KEY });
-});
-
-// 2. Fetch all movies
-app.get("/api/movies", async (req, res) => {
-  try {
-    const movies = await Movie.find().sort({ createdAt: -1 });
-    res.json(movies);
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-// 3. Secure Upload
-app.post("/api/movies/upload", upload.fields([{ name: 'video' }, { name: 'poster' }]), async (req, res) => {
-  try {
-    if (req.body.password !== process.env.ADMIN_PASSWORD) {
-      return res.status(401).json({ error: "Unauthorized: Invalid Password" });
+// 1. Get All Library Movies (Uploaded by you)
+app.get('/api/movies', async (req, res) => {
+    try {
+        const movies = await Movie.find().sort({ createdAt: -1 });
+        res.json(movies);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
-    const newMovie = new Movie({
-      title: req.body.title,
-      category: req.body.category,
-      overview: req.body.overview,
-      videoUrl: req.files['video'][0].path,
-      poster: req.files['poster'] ? req.files['poster'][0].path : ""
+});
+
+// 2. Upload a New Movie (Admin)
+app.post('/api/movies', async (req, res) => {
+    try {
+        const newMovie = new Movie(req.body);
+        await newMovie.save();
+        res.json({ message: "Movie added to library!" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 3. Config Route (Sends API Keys to Frontend securely)
+app.get('/api/config/tmdb', (req, res) => {
+    res.json({ 
+        apiKey: process.env.TMDB_API_KEY,
+        youtubeKey: process.env.YOUTUBE_API_KEY // Ensure this is in Render Env Vars
     });
-    await newMovie.save();
-    res.status(201).json({ message: "Success" });
-  } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 4. Secure Delete
-app.delete("/api/movies/:id", async (req, res) => {
-  if (req.body.password !== process.env.ADMIN_PASSWORD) {
-    return res.status(401).json({ error: "Invalid Password" });
-  }
-  try {
-    await Movie.findByIdAndDelete(req.params.id);
-    res.json({ message: "Deleted" });
-  } catch (err) { res.status(500).json({ error: err.message }); }
-});
-
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../public/index.html"));
+// Serve Frontend
+app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Server running on port
-${PORT}`));
+app.listen(PORT, () => {
+    console.log(`🚀 Server running on port ${PO
+                                            RT}`);
+});
