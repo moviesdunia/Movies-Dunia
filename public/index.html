@@ -3,125 +3,129 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movies Dunia | May 2026 Specials</title>
+    <title>Movies Dunia | 2026 Live Trailers</title>
     <style>
-        :root { --red: #e50914; --bg: #0a0a0a; }
-        body { background: var(--bg); color: white; font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; overflow-x: hidden; }
-        nav { padding: 20px 5%; display: flex; justify-content: space-between; background: linear-gradient(rgba(0,0,0,0.9), transparent); position: fixed; width: 100%; z-index: 100; box-sizing: border-box; }
-        .hero { height: 40vh; background: linear-gradient(to top, var(--bg), transparent), url('https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?q=80&w=1000') center/cover; display: flex; align-items: flex-end; padding: 0 5% 40px; }
-        .row { padding: 20px 0 0 5%; }
-        .row-title { font-size: 1.4rem; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; border-left: 4px solid var(--red); padding-left: 10px; }
-        .movie-list { display: flex; overflow-x: auto; gap: 15px; padding: 10px 0 30px; scrollbar-width: none; min-height: 250px; }
-        .movie-list::-webkit-scrollbar { display: none; }
-        .card { min-width: 170px; height: 255px; background: #111; border-radius: 6px; cursor: pointer; transition: 0.3s ease; overflow: hidden; border: 1px solid #222; }
-        .card:hover { transform: translateY(-10px); box-shadow: 0 10px 20px rgba(229,9,20,0.4); border-color: var(--red); }
+        :root { --red: #e50914; --bg: #050505; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', Roboto, sans-serif; margin: 0; }
+        nav { padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.9); position: fixed; width: 100%; z-index: 1000; box-sizing: border-box; }
+        .hero { height: 50vh; background: linear-gradient(to top, var(--bg), transparent), url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1200') center/cover; display: flex; align-items: flex-end; padding: 0 5% 40px; }
+        .row { padding: 25px 0 0 5%; }
+        .row-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; border-left: 5px solid var(--red); padding-left: 15px; }
+        .movie-list { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 25px; scrollbar-width: none; }
+        .card { min-width: 180px; height: 270px; background: #111; border-radius: 10px; cursor: pointer; transition: 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); position: relative; overflow: hidden; }
+        .card:hover { transform: scale(1.08); z-index: 10; box-shadow: 0 0 20px var(--red); }
         .card img { width: 100%; height: 100%; object-fit: cover; }
-        #trailerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; align-items:center; justify-content:center; }
+        .card-tag { position: absolute; top: 10px; right: 10px; background: var(--red); padding: 3px 8px; font-size: 0.6rem; border-radius: 3px; font-weight: bold; }
+        #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.98); z-index:9999; align-items:center; justify-content:center; }
+        iframe { width: 90%; max-width: 1200px; aspect-ratio: 16/9; border: none; box-shadow: 0 0 50px #000; }
     </style>
 </head>
 <body>
 
 <nav>
-    <a href="/" style="color:var(--red); font-weight:bold; text-decoration:none; font-size:1.8rem;">MOVIES DUNIA</a>
-    <a href="/admin.html" style="color:white; text-decoration:none; font-size:0.8rem; border:1px solid #444; padding:6px 15px; border-radius:4px;">Admin</a>
+    <a href="/" style="color:var(--red); font-size:2rem; font-weight:bold; text-decoration:none;">MOVIES DUNIA</a>
+    <a href="/admin.html" style="color:white; text-decoration:none; opacity:0.6;">Admin</a>
 </nav>
 
 <section class="hero">
     <div>
-        <h1 style="margin:0; font-size:2.8rem;">Trending May 2026</h1>
-        <p style="color:#aaa;">Fresh Hindi, Bengali, and Global releases.</p>
+        <h1 style="font-size:3.5rem; margin-bottom:0;">Live 2026 Trailers</h1>
+        <p style="color:#aaa; font-size:1.2rem;">Powered by TMDB & YouTube Live Search</p>
     </div>
 </section>
 
 <div class="row">
-    <div class="row-title">🎬 Your Library</div>
-    <div id="library-list" class="movie-list"></div>
+    <div class="row-title">🎬 My Library</div>
+    <div id="lib-list" class="movie-list"></div>
 </div>
 
 <div class="row">
     <div class="row-title">🇮🇳 New Desi Series (2026)</div>
-    <div id="indian-series" class="movie-list"></div>
+    <div id="desi-series" class="movie-list"></div>
 </div>
 
 <div class="row">
-    <div class="row-title">🇮🇳 New Desi Movies (2026)</div>
-    <div id="indian-movies" class="movie-list"></div>
+    <div class="row-title">🇮🇳 Upcoming Desi Movies (May-June 2026)</div>
+    <div id="desi-movies" class="movie-list"></div>
 </div>
 
 <div class="row">
-    <div class="row-title">🌎 Global Blockbusters (2026)</div>
-    <div id="global-hits" class="movie-list"></div>
+    <div class="row-title">🌎 Global Future Hits</div>
+    <div id="global-movies" class="movie-list"></div>
 </div>
 
-<div id="trailerModal">
-    <button onclick="closeTrailer()" style="position:absolute; top:20px; right:30px; color:white; background:none; border:none; font-size:3.5rem; cursor:pointer;">×</button>
-    <div id="videoContainer" style="width:90%; max-width:1100px; aspect-ratio:16/9; background:#000;"></div>
+<div id="modal" onclick="this.style.display='none'; document.getElementById('player').src='';">
+    <iframe id="player" src="" allow="autoplay; fullscreen"></iframe>
 </div>
 
 <script>
     let TMDB_KEY = "";
-    // Setting date to start of 2026 to ensure the rows are full of recent hits
-    const START_DATE = "2026-01-01";
+    let YT_KEY = "";
+    const TODAY = "2026-05-11"; // Current date in May 2026
 
     async function init() {
-        try {
-            const configRes = await fetch("/api/config/tmdb");
-            const configData = await configRes.json();
-            TMDB_KEY = configData.apiKey;
+        const config = await fetch("/api/config/tmdb").then(r => r.json());
+        TMDB_KEY = config.apiKey;
+        YT_KEY = config.youtubeKey;
 
-            const libRes = await fetch("/api/movies");
-            const libMovies = await libRes.json();
-            const libList = document.getElementById('library-list');
-            libMovies.forEach(m => {
-                libList.innerHTML += `<div class="card" onclick="window.location.href='player.html?id=${m._id}'"><img src="${m.poster}"></div>`;
-            });
+        // 1. Load Personal Library
+        const movies = await fetch("/api/movies").then(r => r.json());
+        movies.forEach(m => {
+            document.getElementById('lib-list').innerHTML += `
+                <div class="card" onclick="window.location.href='player.html?id=${m._id}'">
+                    <img src="${m.poster}">
+                    <div class="card-tag">UPLOAD</div>
+                </div>`;
+        });
 
-            if (TMDB_KEY) {
-                // Fetching Hindi/Bengali Series from 2026
-                fetchTrailersOnly(`https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_KEY}&with_original_language=hi|bn&first_air_date.gte=${START_DATE}&sort_by=popularity.desc`, 'indian-series', 'tv');
+        // 2. Load Desi Series
+        loadRow(`https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_KEY}&with_original_language=hi|bn&first_air_date.gte=${TODAY}&sort_by=popularity.desc`, 'desi-series', 'tv');
 
-                // Fetching Hindi/Bengali Movies from 2026
-                fetchTrailersOnly(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&region=IN&with_original_language=hi|bn&primary_release_date.gte=${START_DATE}&sort_by=popularity.desc`, 'indian-movies', 'movie');
+        // 3. Load Desi Movies
+        loadRow(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&region=IN&with_original_language=hi|bn&primary_release_date.gte=${TODAY}&sort_by=primary_release_date.asc`, 'desi-movies', 'movie');
 
-                // Fetching Global 2026 Hits
-                fetchTrailersOnly(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&primary_release_date.gte=${START_DATE}&sort_by=popularity.desc`, 'global-hits', 'movie');
-            }
-        } catch (err) { console.error("Init Error", err); }
+        // 4. Load Global Hits
+        loadRow(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&primary_release_date.gte=${TODAY}&sort_by=popularity.desc`, 'global-movies', 'movie');
     }
 
-    async function fetchTrailersOnly(apiUrl, elementId, type) {
-        const res = await fetch(apiUrl);
-        const data = await res.json();
+    async function loadRow(url, elementId, type) {
+        const data = await fetch(url).then(r => r.json());
         const container = document.getElementById(elementId);
         
-        let count = 0;
-        for (const item of data.results) {
-            if (count >= 15) break; 
+        for (let item of data.results.slice(0, 12)) {
+            if (!item.poster_path) continue;
 
-            const vRes = await fetch(`https://api.themoviedb.org/3/${type}/${item.id}/videos?api_key=${TMDB_KEY}`);
-            const vData = await vRes.json();
-            const trailer = vData.results.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
-
-            if (trailer && item.poster_path) {
-                const card = document.createElement('div');
-                card.className = 'card';
-                card.onclick = () => playTrailer(trailer.key);
-                card.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${item.poster_path}" loading="lazy">`;
-                container.appendChild(card);
-                count++;
-            }
+            const card = document.createElement('div');
+            card.className = 'card';
+            card.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${item.poster_path}"><div class="card-tag">2026</div>`;
+            card.onclick = () => getTrailer(item.name || item.title, item.id, type);
+            container.appendChild(card);
         }
     }
 
-    function playTrailer(key) {
-        const container = document.getElementById('videoContainer');
-        container.innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${key}?autoplay=1" frameborder="0" allow="autoplay; encrypted-media" allowfullscreen></iframe>`;
-        document.getElementById('trailerModal').style.display = 'flex';
-    }
+    async function getTrailer(title, id, type) {
+        let videoKey = "";
 
-    function closeTrailer() {
-        document.getElementById('trailerModal').style.display = 'none';
-        document.getElementById('videoContainer').innerHTML = '';
+        // STEP 1: Try TMDB first
+        try {
+            const tmdbRes = await fetch(`https://api.themoviedb.org/3/${type}/${id}/videos?api_key=${TMDB_KEY}`).then(r => r.json());
+            const trailer = tmdbRes.results.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
+            if (trailer) videoKey = trailer.key;
+        } catch (e) { console.log("TMDB Video Error"); }
+
+        // STEP 2: If no TMDB trailer, use your YouTube API Key!
+        if (!videoKey && YT_KEY) {
+            console.log(`Searching YouTube for: ${title} Official Trailer`);
+            const ytRes = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(title + ' official trailer')}&key=${YT_KEY}&maxResults=1&type=video`).then(r => r.json());
+            if (ytRes.items && ytRes.items.length > 0) videoKey = ytRes.items[0].id.videoId;
+        }
+
+        if (videoKey) {
+            document.getElementById('player').src = `https://www.youtube.com/embed/${videoKey}?autoplay=1`;
+            document.getElementById('modal').style.display = 'flex';
+        } else {
+            alert("Trailer not found yet for this upcoming title.");
+        }
     }
 
     init();
