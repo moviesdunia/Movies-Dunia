@@ -1,20 +1,124 @@
 <!DOCTYPE html>
-<html>
-<body style="background:black;text-align:center;">
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Playing Movie | Movies Dunia</title>
+    <style>
+        body {
+            background: #000;
+            color: white;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+        }
 
-<video id="video" controls autoplay style="width:90%"></video>
+        .container {
+            width: 95%;
+            max-width: 1000px;
+        }
 
-<br><br>
+        h1 {
+            color: #e50914;
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+        }
 
-<a id="download" download>
-<button>⬇ Download</button>
-</a>
+        video {
+            width: 100%;
+            border-radius: 8px;
+            box-shadow: 0 0 20px rgba(229, 9, 20, 0.2);
+            outline: none;
+            background: #111;
+        }
 
-<script>
-const url = new URLSearchParams(location.search).get("video");
-video.src = url;
-download.href = url;
-</script>
+        .controls {
+            margin-top: 25px;
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 12px 25px;
+            font-weight: bold;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 1rem;
+        }
+
+        .btn-download {
+            background: #e50914;
+            color: white;
+        }
+
+        .btn-download:hover {
+            background: #b20710;
+        }
+
+        .btn-back {
+            background: #333;
+            color: white;
+            text-decoration: none;
+            display: inline-block;
+            padding: 12px 25px;
+            border-radius: 5px;
+        }
+
+        .btn-back:hover {
+            background: #444;
+        }
+
+        .error-msg {
+            color: #666;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Movies Dunia Player</h1>
+
+        <video id="videoPlayer" controls autoplay>
+            Your browser does not support the video tag.
+        </video>
+
+        <div class="controls">
+            <a href="index.html" class="btn-back">← Back to Home</a>
+            
+            <a id="downloadLink" download="movie_dunia.mp4">
+                <button class="btn-download">⬇ Download Movie</button>
+            </a>
+        </div>
+
+        <div id="status" class="error-msg"></div>
+    </div>
+
+    <script>
+        // Get the video URL from the browser search bar (?video=URL)
+        const params = new URLSearchParams(window.location.search);
+        const videoUrl = params.get("video");
+        
+        const videoElement = document.getElementById("videoPlayer");
+        const downloadBtn = document.getElementById("downloadLink");
+        const statusMsg = document.getElementById("status");
+
+        if (videoUrl) {
+            videoElement.src = videoUrl;
+            downloadBtn.href = videoUrl;
+        } else {
+            statusMsg.innerHTML = "No video source found. Please go back and select a movie.";
+            videoElement.style.display = "none";
+            downloadBtn.style.display = "none";
+        }
+    </script>
 
 </body>
 </html>
