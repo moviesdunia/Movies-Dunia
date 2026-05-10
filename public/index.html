@@ -3,17 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movies Dunia | 2026 Portal</title>
+    <title>Movies Dunia | Global & Desi 2026</title>
     <style>
         :root { --red: #e50914; --bg: #050505; }
         body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; }
         nav { padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.9); position: fixed; width: 100%; z-index: 1000; box-sizing: border-box; }
-        .hero { height: 45vh; background: linear-gradient(to top, var(--bg), transparent), url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1200') center/cover; display: flex; align-items: flex-end; padding: 0 5% 40px; }
+        .hero { height: 40vh; background: linear-gradient(to top, var(--bg), transparent), url('https://images.unsplash.com/photo-1478720568477-152d9b164e26?q=80&w=1200') center/cover; display: flex; align-items: flex-end; padding: 0 5% 40px; }
         .row { padding: 25px 0 0 5%; }
         .row-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; border-left: 5px solid var(--red); padding-left: 15px; }
         .movie-list { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 25px; scrollbar-width: none; }
         .card { min-width: 180px; height: 270px; background: #111; border-radius: 10px; cursor: pointer; transition: 0.4s; position: relative; overflow: hidden; border: 1px solid #222; }
-        .card:hover { transform: scale(1.05); border-color: var(--red); }
+        .card:hover { transform: scale(1.05); border-color: var(--red); box-shadow: 0 0 15px rgba(229,9,20,0.4); }
         .card img { width: 100%; height: 100%; object-fit: cover; }
         .card-tag { position: absolute; top: 10px; right: 10px; background: var(--red); padding: 3px 8px; font-size: 0.65rem; border-radius: 3px; font-weight: bold; }
         #modal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.98); z-index:9999; align-items:center; justify-content:center; }
@@ -29,58 +29,65 @@
 </nav>
 
 <section class="hero">
-    <div><h1 style="font-size:3rem; margin:0;">2026 Entertainment</h1></div>
+    <div><h1 style="font-size:3rem; margin:0;">Global Cinema 2026</h1></div>
 </section>
 
 <div class="row">
-    <div class="row-title">🎬 Your Library (Full Movies)</div>
+    <div class="row-title">🎬 Your Uploads</div>
     <div id="lib-list" class="movie-list"></div>
 </div>
 
 <div class="row">
-    <div class="row-title">🆕 Upcoming Desi Trailers (2026)</div>
-    <div id="upcoming-list" class="movie-list"></div>
+    <div class="row-title">🌎 Hollywood Blockbusters (May 2026+)</div>
+    <div id="hollywood-list" class="movie-list"></div>
+</div>
+
+<div class="row">
+    <div class="row-title">🇮🇳 Upcoming Desi Movies</div>
+    <div id="desi-list" class="movie-list"></div>
 </div>
 
 <div id="modal">
-    <button class="close-btn" onclick="closeModal()">&times;</button>
+    <button class="close-btn" onclick="closeModal()">×</button>
     <div id="videoContainer" style="width:100%; display:flex; justify-content:center;"></div>
 </div>
 
 <script>
     let TMDB_KEY = "";
     let YT_KEY = "";
+    const TODAY = "2026-05-11"; // Current Date
 
     async function init() {
         const config = await fetch("/api/config/tmdb").then(r => r.json());
         TMDB_KEY = config.apiKey;
         YT_KEY = config.youtubeKey;
 
-        // 1. Load Your Personal Library
+        // 1. Library
         const myMovies = await fetch("/api/movies").then(r => r.json());
-        const libList = document.getElementById('lib-list');
         myMovies.forEach(m => {
             const card = document.createElement('div');
             card.className = 'card';
-            // REDIRECT to your player for your own uploads
             card.onclick = () => { window.location.href = `player.html?id=${m._id}`; };
-            card.innerHTML = `<img src="${m.poster}"><div class="card-tag">WATCH FULL</div>`;
-            libList.appendChild(card);
+            card.innerHTML = `<img src="${m.poster}"><div class="card-tag">FULL MOVIE</div>`;
+            document.getElementById('lib-list').appendChild(card);
         });
 
-        // 2. Load Upcoming from TMDB
         if(TMDB_KEY) {
-            loadUpcoming(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&region=IN&with_original_language=hi|bn&primary_release_date.gte=2026-05-11&sort_by=primary_release_date.asc`);
+            // 2. Hollywood (English language filter added)
+            loadSection(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&with_original_language=en&primary_release_date.gte=${TODAY}&sort_by=popularity.desc`, 'hollywood-list');
+
+            // 3. Desi (Hindi/Bengali filter)
+            loadSection(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&with_original_language=hi|bn&region=IN&primary_release_date.gte=${TODAY}&sort_by=popularity.desc`, 'desi-list');
         }
     }
 
-    async function loadUpcoming(url) {
+    async function loadSection(url, elementId) {
         const data = await fetch(url).then(r => r.json());
-        const list = document.getElementById('upcoming-list');
+        const list = document.getElementById(elementId);
         for (let item of data.results.slice(0, 15)) {
+            if(!item.poster_path) continue;
             const card = document.createElement('div');
             card.className = 'card';
-            // OPEN MODAL for external trailers
             card.onclick = () => getTrailer(item.title, item.id);
             card.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${item.poster_path}"><div class="card-tag">TRAILER</div>`;
             list.appendChild(card);
@@ -89,12 +96,11 @@
 
     async function getTrailer(title, id) {
         let videoKey = "";
-        // Try TMDB first
         const tmdbRes = await fetch(`https://api.themoviedb.org/3/movie/${id}/videos?api_key=${TMDB_KEY}`).then(r => r.json());
-        const trailer = tmdbRes.results?.find(v => v.site === 'YouTube');
+        const trailer = tmdbRes.results?.find(v => v.site === 'YouTube' && v.type === 'Trailer');
         
         if (trailer) videoKey = trailer.key;
-        else if (YT_KEY) { // Backup search on YouTube
+        else if (YT_KEY) {
             const ytRes = await fetch(`https://www.googleapis.com/youtube/v3/search?part=snippet&q=${encodeURIComponent(title + ' official trailer')}&key=${YT_KEY}&maxResults=1&type=video`).then(r => r.json());
             if (ytRes.items?.length > 0) videoKey = ytRes.items[0].id.videoId;
         }
@@ -103,7 +109,7 @@
             document.getElementById('videoContainer').innerHTML = `<iframe src="https://www.youtube.com/embed/${videoKey}?autoplay=1" allow="autoplay; fullscreen" allowfullscreen></iframe>`;
             document.getElementById('modal').style.display = 'flex';
         } else {
-            alert("Trailer not available yet.");
+            alert("Trailer not found.");
         }
     }
 
@@ -114,6 +120,5 @@
 
     init();
 </script>
-</
-    body>
+</body>
 </html>
