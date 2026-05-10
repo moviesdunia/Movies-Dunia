@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movies Dunia | 2026 Exclusive</title>
+    <title>Movies Dunia | May 2026 Specials</title>
     <style>
         :root { --red: #e50914; --bg: #0a0a0a; }
         body { background: var(--bg); color: white; font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; overflow-x: hidden; }
@@ -13,56 +13,55 @@
         .row-title { font-size: 1.4rem; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; border-left: 4px solid var(--red); padding-left: 10px; }
         .movie-list { display: flex; overflow-x: auto; gap: 15px; padding: 10px 0 30px; scrollbar-width: none; min-height: 250px; }
         .movie-list::-webkit-scrollbar { display: none; }
-        .card { min-width: 170px; height: 255px; background: #111; border-radius: 6px; cursor: pointer; transition: 0.3s ease; overflow: hidden; position: relative; border: 1px solid #222; }
+        .card { min-width: 170px; height: 255px; background: #111; border-radius: 6px; cursor: pointer; transition: 0.3s ease; overflow: hidden; border: 1px solid #222; }
         .card:hover { transform: translateY(-10px); box-shadow: 0 10px 20px rgba(229,9,20,0.4); border-color: var(--red); }
         .card img { width: 100%; height: 100%; object-fit: cover; }
         #trailerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; align-items:center; justify-content:center; }
-        .loading-shimmer { color: #555; font-size: 0.8rem; padding: 20px; font-style: italic; }
     </style>
 </head>
 <body>
 
 <nav>
-    <a href="/" style="color:var(--red); font-weight:bold; text-decoration:none; font-size:1.8rem; letter-spacing:1px;">MOVIES DUNIA</a>
-    <a href="/admin.html" style="color:white; text-decoration:none; font-size:0.8rem; border:1px solid #444; padding:6px 15px; border-radius:4px; background:rgba(255,255,255,0.05);">Admin Panel</a>
+    <a href="/" style="color:var(--red); font-weight:bold; text-decoration:none; font-size:1.8rem;">MOVIES DUNIA</a>
+    <a href="/admin.html" style="color:white; text-decoration:none; font-size:0.8rem; border:1px solid #444; padding:6px 15px; border-radius:4px;">Admin</a>
 </nav>
 
 <section class="hero">
     <div>
-        <h1 style="margin:0; font-size:2.8rem;">2026 Blockbusters</h1>
-        <p style="color:#aaa;">Showing only the latest Hindi, Bengali, and Global releases from April 2026 onwards.</p>
+        <h1 style="margin:0; font-size:2.8rem;">Trending May 2026</h1>
+        <p style="color:#aaa;">Fresh Hindi, Bengali, and Global releases.</p>
     </div>
 </section>
 
 <div class="row">
-    <div class="row-title">🎬 Your Uploads</div>
+    <div class="row-title">🎬 Your Library</div>
     <div id="library-list" class="movie-list"></div>
 </div>
 
 <div class="row">
-    <div class="row-title">🇮🇳 2026 Desi Series (Hindi/Bengali)</div>
-    <div id="indian-series" class="movie-list"><div class="loading-shimmer">Scanning April 2026+ Series...</div></div>
+    <div class="row-title">🇮🇳 New Desi Series (2026)</div>
+    <div id="indian-series" class="movie-list"></div>
 </div>
 
 <div class="row">
-    <div class="row-title">🇮🇳 2026 Desi Movies</div>
-    <div id="indian-movies" class="movie-list"><div class="loading-shimmer">Scanning April 2026+ Movies...</div></div>
+    <div class="row-title">🇮🇳 New Desi Movies (2026)</div>
+    <div id="indian-movies" class="movie-list"></div>
 </div>
 
 <div class="row">
-    <div class="row-title">🌎 Global 2026 Hits</div>
-    <div id="global-hits" class="movie-list"><div class="loading-shimmer">Scanning April 2026+ Global...</div></div>
+    <div class="row-title">🌎 Global Blockbusters (2026)</div>
+    <div id="global-hits" class="movie-list"></div>
 </div>
 
 <div id="trailerModal">
     <button onclick="closeTrailer()" style="position:absolute; top:20px; right:30px; color:white; background:none; border:none; font-size:3.5rem; cursor:pointer;">×</button>
-    <div id="videoContainer" style="width:90%; max-width:1100px; aspect-ratio:16/9; background:#000; box-shadow: 0 0 50px #000;"></div>
+    <div id="videoContainer" style="width:90%; max-width:1100px; aspect-ratio:16/9; background:#000;"></div>
 </div>
 
 <script>
     let TMDB_KEY = "";
-    // Hardcoded Start Date: April 1, 2026
-    const START_DATE = "2026-04-01";
+    // Setting date to start of 2026 to ensure the rows are full of recent hits
+    const START_DATE = "2026-01-01";
 
     async function init() {
         try {
@@ -70,57 +69,48 @@
             const configData = await configRes.json();
             TMDB_KEY = configData.apiKey;
 
-            // 1. Your Library
             const libRes = await fetch("/api/movies");
             const libMovies = await libRes.json();
             const libList = document.getElementById('library-list');
-            if(libMovies.length === 0) libList.innerHTML = "<p style='color:#444; padding:20px;'>No personal uploads yet.</p>";
             libMovies.forEach(m => {
                 libList.innerHTML += `<div class="card" onclick="window.location.href='player.html?id=${m._id}'"><img src="${m.poster}"></div>`;
             });
 
             if (TMDB_KEY) {
-                // 2. Hindi/Bengali Series from April 2026
+                // Fetching Hindi/Bengali Series from 2026
                 fetchTrailersOnly(`https://api.themoviedb.org/3/discover/tv?api_key=${TMDB_KEY}&with_original_language=hi|bn&first_air_date.gte=${START_DATE}&sort_by=popularity.desc`, 'indian-series', 'tv');
 
-                // 3. Hindi/Bengali Movies from April 2026
-                fetchTrailersOnly(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&region=IN&with_original_language=hi|bn&primary_release_date.gte=${START_DATE}&sort_by=primary_release_date.asc`, 'indian-movies', 'movie');
+                // Fetching Hindi/Bengali Movies from 2026
+                fetchTrailersOnly(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&region=IN&with_original_language=hi|bn&primary_release_date.gte=${START_DATE}&sort_by=popularity.desc`, 'indian-movies', 'movie');
 
-                // 4. Global Movies from April 2026
+                // Fetching Global 2026 Hits
                 fetchTrailersOnly(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&primary_release_date.gte=${START_DATE}&sort_by=popularity.desc`, 'global-hits', 'movie');
             }
         } catch (err) { console.error("Init Error", err); }
     }
 
     async function fetchTrailersOnly(apiUrl, elementId, type) {
-        try {
-            const res = await fetch(apiUrl);
-            const data = await res.json();
-            const container = document.getElementById(elementId);
-            container.innerHTML = ""; 
+        const res = await fetch(apiUrl);
+        const data = await res.json();
+        const container = document.getElementById(elementId);
+        
+        let count = 0;
+        for (const item of data.results) {
+            if (count >= 15) break; 
 
-            let count = 0;
-            // Scan through results
-            for (const item of data.results) {
-                if (count >= 15) break; 
+            const vRes = await fetch(`https://api.themoviedb.org/3/${type}/${item.id}/videos?api_key=${TMDB_KEY}`);
+            const vData = await vRes.json();
+            const trailer = vData.results.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
 
-                const vRes = await fetch(`https://api.themoviedb.org/3/${type}/${item.id}/videos?api_key=${TMDB_KEY}`);
-                const vData = await vRes.json();
-                
-                // Find trailer
-                const trailer = vData.results.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
-
-                if (trailer && item.poster_path) {
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.onclick = () => playTrailer(trailer.key);
-                    card.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${item.poster_path}" alt="${item.name || item.title}" loading="lazy">`;
-                    container.appendChild(card);
-                    count++;
-                }
+            if (trailer && item.poster_path) {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.onclick = () => playTrailer(trailer.key);
+                card.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${item.poster_path}" loading="lazy">`;
+                container.appendChild(card);
+                count++;
             }
-            if(count === 0) container.innerHTML = "<p style='color:#444; padding:20px;'>No trailers found for this period yet.</p>";
-        } catch(e) { console.error("Fetch error", e); }
+        }
     }
 
     function playTrailer(key) {
