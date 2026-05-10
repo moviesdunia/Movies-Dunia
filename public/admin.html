@@ -1,110 +1,162 @@
-const API_BASE = "https://movies-dunia.onrender.com/api/movies";
-
-// --- DELETE FUNCTION ---
-async function deleteMovie(id) {
-    const password = document.getElementById("pass").value;
-    if (!password) return alert("Enter password to delete.");
-    if (!confirm("Are you sure?")) return;
-
-    try {
-        const res = await fetch(`${API_BASE}/${id}`, {
-            method: "DELETE",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ password })
-        });
-        const data = await res.json();
-
-        if (res.ok) {
-            alert("Deleted!");
-            loadMovies();
-        } else {
-            alert("Delete failed: " + (data.error || "Unknown Error"));
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movies Dunia | Admin Panel</title>
+    <style>
+        /* CSS to make it look like a dashboard */
+        body { background: #000; color: #fff; font-family: 'Segoe UI', sans-serif; padding: 20px; margin: 0; }
+        .container { max-width: 600px; margin: auto; }
+        .card { background: #111; border: 1px solid #222; padding: 25px; border-radius: 12px; margin-bottom: 20px; }
+        h2 { color: #e50914; margin-top: 0; text-align: center; }
+        label { display: block; margin: 15px 0 5px; color: #888; font-size: 0.8rem; }
+        input, select, textarea { 
+            width: 100%; padding: 12px; background: #222; border: 1px solid #333; 
+            color: #fff; border-radius: 6px; box-sizing: border-box; 
         }
-    } catch (err) {
-        alert("Network Error: Could not connect to server.");
-    }
-}
-
-// --- UPLOAD FUNCTION ---
-async function uploadMovie() {
-    const btn = document.getElementById("upBtn");
-    const container = document.getElementById("progContainer");
-    const bar = document.getElementById("progBar");
-    const status = document.getElementById("status-text");
-
-    const pass = document.getElementById("pass").value;
-    const title = document.getElementById("title").value;
-    const video = document.getElementById("video").files[0];
-
-    if (!pass || !title || !video) return alert("Password, Title, and Video are required!");
-
-    const formData = new FormData();
-    formData.append("password", pass);
-    formData.append("title", title);
-    formData.append("category", document.getElementById("category").value);
-    formData.append("overview", document.getElementById("overview").value);
-    formData.append("video", video);
-    formData.append("poster", document.getElementById("poster").files[0]);
-
-    btn.disabled = true;
-    container.style.display = "block";
-    bar.style.width = "10%";
-    bar.style.background = "#e50914";
-    status.innerText = "⏳ Connecting to server...";
-
-    try {
-        const res = await fetch(API_BASE + "/upload", {
-            method: "POST",
-            body: formData
-        });
-
-        const data = await res.json();
-
-        if (res.ok) {
-            bar.style.width = "100%";
-            status.innerText = "✅ Success! Refreshing...";
-            setTimeout(() => location.reload(), 1500);
-        } else {
-            let errorMsg = "Upload Failed";
-            if (res.status === 401) errorMsg = "❌ Invalid Admin Password";
-            else if (res.status === 413) errorMsg = "❌ File too large for server";
-            else if (data.error) errorMsg = `❌ Server Error: ${data.error}`;
-            throw new Error(errorMsg);
+        button { 
+            width: 100%; padding: 15px; background: #e50914; border: none; 
+            color: #fff; font-weight: bold; border-radius: 6px; cursor: pointer; 
+            margin-top: 20px; transition: 0.3s;
         }
-    } catch (err) {
-        bar.style.width = "100%";
-        bar.style.background = "#ff4444";
-        status.style.color = "#ff4444";
-        status.innerText = err.message || "❌ Connection Timeout";
-        btn.innerText = "Try Again";
-    } finally {
-        btn.disabled = false;
-    }
-}
-
-// --- LOAD LIST FUNCTION ---
-async function loadMovies() {
-    try {
-        const res = await fetch(API_BASE);
-        const movies = await res.json();
-        const listDiv = document.getElementById("list");
+        button:hover { background: #ff0a16; }
+        button:disabled { background: #555; cursor: not-allowed; }
         
-        if (movies.length === 0) {
-            listDiv.innerHTML = "<p style='color: #666;'>No movies found in database.</p>";
-            return;
+        /* Progress Bar */
+        #progContainer { display: none; margin-top: 20px; background: #333; border-radius: 10px; overflow: hidden; }
+        #progBar { width: 0%; height: 8px; background: #e50914; transition: 0.3s; }
+        #status-text { text-align: center; font-size: 0.8rem; margin-top: 8px; color: #aaa; }
+
+        /* Movie List */
+        .movie-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            background: #1a1a1a; padding: 12px; margin-bottom: 8px; border-radius: 6px; 
         }
+        .del-btn { background: #333; width: auto; padding: 5px 12px; margin: 0; font-size: 0.8rem; color: #ff4444; }
+    </style>
+</head>
+<body>
 
-        listDiv.innerHTML = movies.map(m => `
-            <div class="movie-item" style="display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 10px; margin-bottom: 8px; border-radius: 5px;">
-                <span>${m.title}</span>
-                <button class="del-btn" onclick="deleteMovie('${m._id}')" style="background: #333; color: #ff4444; border: 1px solid #444; padding: 5px 10px; cursor: pointer;">Delete</button>
-            </div>
-        `).join('');
-    } catch (e) {
-        document.getElementById("list").innerText = "Error loading movies.";
+<div class="container">
+    <div class="card">
+        <h2>🎬 Upload Movie</h2>
+        <input type="password" id="pass" placeholder="Admin Password">
+        <input type="text" id="title" placeholder="Movie Title">
+        
+        <select id="category">
+            <option value="action">Action</option>
+            <option value="horror">Horror</option>
+            <option value="sci-fi">Sci-Fi</option>
+            <option value="drama">Drama</option>
+        </select>
+
+        <textarea id="overview" rows="3" placeholder="Movie Overview/Description"></textarea>
+
+        <label>Poster Image (JPG/PNG)</label>
+        <input type="file" id="poster" accept="image/*">
+
+        <label>Video File (MP4)</label>
+        <input type="file" id="video" accept="video/*">
+
+        <button id="upBtn" onclick="uploadMovie()">Start Upload</button>
+
+        <div id="progContainer">
+            <div id="progBar"></div>
+            <div id="status-text">Uploading...</div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>📂 Manage Library</h2>
+        <div id="list">Loading movies...</div>
+    </div>
+</div>
+
+<script>
+    const API_BASE = "https://movies-dunia.onrender.com/api/movies";
+
+    async function loadMovies() {
+        try {
+            const res = await fetch(API_BASE);
+            const movies = await res.json();
+            const listDiv = document.getElementById("list");
+            if (movies.length === 0) {
+                listDiv.innerHTML = "<p style='color:#666; text-align:center;'>No movies found.</p>";
+                return;
+            }
+            listDiv.innerHTML = movies.map(m => `
+                <div class="movie-item">
+                    <span>${m.title}</span>
+                    <button class="del-btn" onclick="deleteMovie('${m._id}')">Delete</button>
+                </div>
+            `).join('');
+        } catch (e) {
+            document.getElementById("list").innerText = "Error loading list.";
+        }
     }
-}
 
-// Initialize
+    async function uploadMovie() {
+        const btn = document.getElementById("upBtn");
+        const container = document.getElementById("progContainer");
+        const bar = document.getElementById("progBar");
+        const status = document.getElementById("status-text");
 
-loadMovies();
+        const pass = document.getElementById("pass").value;
+        const title = document.getElementById("title").value;
+        const video = document.getElementById("video").files[0];
+
+        if (!pass || !title || !video) return alert("Please fill Title, Password and select a Video!");
+
+        const formData = new FormData();
+        formData.append("password", pass);
+        formData.append("title", title);
+        formData.append("category", document.getElementById("category").value);
+        formData.append("overview", document.getElementById("overview").value);
+        formData.append("video", video);
+        formData.append("poster", document.getElementById("poster").files[0]);
+
+        btn.disabled = true;
+        container.style.display = "block";
+        bar.style.width = "20%";
+        status.innerText = "⏳ Uploading to server...";
+
+        try {
+            const res = await fetch(API_BASE + "/upload", { method: "POST", body: formData });
+            const data = await res.json();
+
+            if (res.ok) {
+                bar.style.width = "100%";
+                status.innerText = "✅ Success! Reloading...";
+                setTimeout(() => location.reload(), 1500);
+            } else {
+                throw new Error(data.error || "Upload failed");
+            }
+        } catch (err) {
+            bar.style.background = "#ff4444";
+            status.innerText = "❌ " + err.message;
+            btn.disabled = false;
+        }
+    }
+
+    async function deleteMovie(id) {
+        const password = document.getElementById("pass").value;
+        if (!password) return alert("Enter admin password first!");
+        if (!confirm("Delete this movie?")) return;
+
+        try {
+            const res = await fetch(`${API_BASE}/${id}`, {
+                method: "DELETE",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ password })
+            });
+            if (res.ok) { alert("Deleted!"); loadMovies(); } 
+            else { alert("Failed to delete. Check password."); }
+        } catch (err) { alert("Network Error"); }
+    }
+
+    loadMovies();
+</script>
+
+</body>
+</html>
