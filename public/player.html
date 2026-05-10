@@ -3,122 +3,68 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Playing Movie | Movies Dunia</title>
+    <title>Playing Now | Movies Dunia</title>
     <style>
-        body {
-            background: #000;
-            color: white;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            min-height: 100vh;
-        }
-
-        .container {
-            width: 95%;
-            max-width: 1000px;
-        }
-
-        h1 {
-            color: #e50914;
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-        }
-
-        video {
-            width: 100%;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(229, 9, 20, 0.2);
-            outline: none;
-            background: #111;
-        }
-
-        .controls {
-            margin-top: 25px;
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-        }
-
-        button {
-            padding: 12px 25px;
-            font-weight: bold;
-            border: none;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: 0.2s;
-            font-size: 1rem;
-        }
-
-        .btn-download {
-            background: #e50914;
-            color: white;
-        }
-
-        .btn-download:hover {
-            background: #b20710;
-        }
-
-        .btn-back {
-            background: #333;
-            color: white;
-            text-decoration: none;
-            display: inline-block;
-            padding: 12px 25px;
-            border-radius: 5px;
-        }
-
-        .btn-back:hover {
-            background: #444;
-        }
-
-        .error-msg {
-            color: #666;
-            margin-top: 20px;
-        }
+        body { background: #000; color: #fff; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; }
+        .container { width: 90%; max-width: 1000px; text-align: center; }
+        video { width: 100%; border-radius: 8px; box-shadow: 0 0 20px rgba(229, 9, 20, 0.5); background: #111; }
+        h1 { color: #e50914; margin-bottom: 10px; font-size: 1.5rem; }
+        p { color: #aaa; margin-bottom: 20px; }
+        .back-btn { display: inline-block; padding: 10px 20px; background: #333; color: #fff; text-decoration: none; border-radius: 5px; margin-bottom: 20px; transition: 0.3s; }
+        .back-btn:hover { background: #444; }
+        #loading { font-size: 1.2rem; color: #e50914; }
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>Movies Dunia Player</h1>
-
-        <video id="videoPlayer" controls autoplay>
-            Your browser does not support the video tag.
-        </video>
-
-        <div class="controls">
-            <a href="index.html" class="btn-back">← Back to Home</a>
-            
-            <a id="downloadLink" download="movie_dunia.mp4">
-                <button class="btn-download">⬇ Download Movie</button>
-            </a>
-        </div>
-
-        <div id="status" class="error-msg"></div>
+<div class="container">
+    <a href="index.html" class="back-btn">← Back to Home</a>
+    <div id="player-content">
+        <div id="loading">Locating Video Stream...</div>
     </div>
+</div>
 
-    <script>
-        // Get the video URL from the browser search bar (?video=URL)
-        const params = new URLSearchParams(window.location.search);
-        const videoUrl = params.get("video");
-        
-        const videoElement = document.getElementById("videoPlayer");
-        const downloadBtn = document.getElementById("downloadLink");
-        const statusMsg = document.getElementById("status");
+<script>
+    const API_BASE = "https://movies-dunia.onrender.com/api/movies";
 
-        if (videoUrl) {
-            videoElement.src = videoUrl;
-            downloadBtn.href = videoUrl;
-        } else {
-            statusMsg.innerHTML = "No video source found. Please go back and select a movie.";
-            videoElement.style.display = "none";
-            downloadBtn.style.display = "none";
+    async function loadPlayer() {
+        // 1. Get the Movie ID from the URL (e.g., player.html?id=123)
+        const urlParams = new URLSearchParams(window.location.search);
+        const movieId = urlParams.get('id');
+
+        if (!movieId) {
+            document.getElementById('player-content').innerHTML = "<h2>No movie selected.</h2>";
+            return;
         }
-    </script>
+
+        try {
+            // 2. Fetch all movies and find the one that matches our ID
+            // (Note: In a bigger app we'd fetch just one, but this works perfectly for now)
+            const res = await fetch(API_BASE);
+            const movies = await res.json();
+            const movie = movies.find(m => m._id === movieId);
+
+            if (movie && movie.videoUrl) {
+                document.title = `Watching ${movie.title} | Movies Dunia`;
+                document.getElementById('player-content').innerHTML = `
+                    <h1>${movie.title}</h1>
+                    <p>${movie.overview || "No description available."}</p>
+                    <video controls autoplay poster="${movie.poster}">
+                        <source src="${movie.videoUrl}" type="video/mp4">
+                        Your browser does not support the video tag.
+                    </video>
+                `;
+            } else {
+                document.getElementById('player-content').innerHTML = "<h2>Video link not found in database.</h2>";
+            }
+        } catch (err) {
+            document.getElementById('player-content').innerHTML = "<h2>Error connecting to server.</h2>";
+        }
+    }
+
+    loadPlayer();
+</script>
 
 </body>
+    
 </html>
