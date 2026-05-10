@@ -5,133 +5,99 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Movies Dunia | Premium Streaming</title>
     <style>
-        :root { --primary: #e50914; --bg: #0a0a0a; --card-bg: #1a1a1a; }
-        body { background: var(--bg); color: white; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; overflow-x: hidden; }
-        
-        /* Navbar */
-        nav { padding: 20px 5%; display: flex; justify-content: space-between; align-items: center; position: fixed; width: 100%; z-index: 1000; transition: 0.5s; background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent); }
-        .logo { color: var(--primary); font-size: 1.8rem; font-weight: bold; text-decoration: none; }
-        
-        /* Hero Banner */
-        .hero { height: 80vh; width: 100%; background: linear-gradient(to right, rgba(0,0,0,0.9), transparent), url('https://images.unsplash.com/photo-1626814026160-2237a95fc5a0?auto=format&fit=crop&w=1200') center/cover; display: flex; align-items: center; padding: 0 5%; box-sizing: border-box; }
-        .hero-content { max-width: 600px; }
-        .hero-content h1 { font-size: 3.5rem; margin: 0; }
-        .hero-content p { font-size: 1.1rem; color: #ccc; }
-
-        /* Movie Rows */
-        .row { padding: 20px 0 20px 5%; }
-        .row-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 15px; }
+        :root { --red: #e50914; --bg: #0a0a0a; }
+        body { background: var(--bg); color: white; font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; overflow-x: hidden; }
+        nav { padding: 20px 5%; display: flex; justify-content: space-between; background: linear-gradient(rgba(0,0,0,0.8), transparent); position: fixed; width: 100%; z-index: 100; box-sizing: border-box; }
+        .hero { height: 60vh; background: linear-gradient(to right, #000, transparent), url('https://images.unsplash.com/photo-1485846234645-a62644f84728?q=80&w=1000') center/cover; display: flex; align-items: center; padding: 0 5%; }
+        .row { padding: 20px 0 0 5%; }
+        .row-title { font-size: 1.5rem; font-weight: bold; margin-bottom: 10px; }
         .movie-list { display: flex; overflow-x: auto; gap: 15px; padding-bottom: 20px; scrollbar-width: none; }
         .movie-list::-webkit-scrollbar { display: none; }
-
-        /* Advanced Card Design */
-        .card { 
-            min-width: 200px; height: 300px; background: var(--card-bg); 
-            border-radius: 8px; overflow: hidden; position: relative; 
-            transition: transform 0.3s ease; cursor: pointer;
-        }
-        .card:hover { transform: scale(1.08); z-index: 2; }
+        .card { min-width: 180px; height: 270px; background: #1a1a1a; border-radius: 8px; cursor: pointer; transition: 0.4s; overflow: hidden; position: relative; }
+        .card:hover { transform: scale(1.08); z-index: 5; }
         .card img { width: 100%; height: 100%; object-fit: cover; }
-        .card-info { 
-            position: absolute; bottom: 0; background: linear-gradient(transparent, rgba(0,0,0,0.9)); 
-            width: 100%; padding: 15px; box-sizing: border-box; opacity: 0; transition: 0.3s;
-        }
-        .card:hover .card-info { opacity: 1; }
-        .card-title { font-weight: bold; font-size: 0.9rem; }
-        
-        /* Footer */
-        footer { padding: 40px; text-align: center; color: #555; border-top: 1px solid #222; }
+        #trailerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; align-items:center; justify-content:center; }
     </style>
 </head>
 <body>
 
-<nav id="navbar">
-    <a href="#" class="logo">MOVIES DUNIA</a>
-    <div>
-        <a href="/admin.html" style="color:white; text-decoration:none; font-size:0.9rem;">Admin</a>
-    </div>
+<nav>
+    <a href="/" style="color:var(--red); font-weight:bold; text-decoration:none; font-size:1.8rem;">MOVIES DUNIA</a>
+    <a href="/admin.html" style="color:white; text-decoration:none; font-size:0.9rem; border:1px solid white; padding:5px 15px; border-radius:4px;">Admin Panel</a>
 </nav>
 
 <section class="hero">
-    <div class="hero-content">
-        <h1 id="hero-title">Welcome Back</h1>
-        <p id="hero-desc">Stream the latest blockbusters and exclusive content anywhere, anytime.</p>
-        <button style="padding: 12px 30px; background: var(--primary); color:white; border:none; border-radius:4px; font-weight:bold; cursor:pointer;">▶ Watch Now</button>
+    <div>
+        <h1 style="font-size: 3rem; margin: 0;">Unlimited Movies</h1>
+        <p style="font-size: 1.2rem; color: #ccc;">Watch trailers for upcoming blockbusters below.</p>
     </div>
 </section>
 
 <div class="row">
-    <div class="row-title">🔥 Trending Now</div>
-    <div class="movie-list" id="trending-list">
-        </div>
+    <div class="row-title">🔥 Your Library</div>
+    <div class="movie-list" id="trending"></div>
 </div>
 
 <div class="row">
-    <div class="row-title">🎬 Action & Adventure</div>
-    <div class="movie-list" id="action-list"></div>
+    <div class="row-title">🆕 Upcoming Trailers (Live)</div>
+    <div class="movie-list" id="upcoming"></div>
 </div>
 
-<div class="row">
-    <div class="row-title">👻 Horror & Thriller</div>
-    <div class="movie-list" id="horror-list"></div>
+<div id="trailerModal">
+    <button onclick="closeTrailer()" style="position:absolute; top:20px; right:30px; color:white; background:none; border:none; font-size:3rem; cursor:pointer;">&times;</button>
+    <div id="videoContainer" style="width:85%; max-width:1000px; aspect-ratio:16/9;"></div>
 </div>
-
-<footer>
-    &copy; 2026 Movies Dunia. Built with ❤️ for Cinema.
-</footer>
 
 <script>
-    const API = "https://movies-dunia.onrender.com/api/movies";
+    let TMDB_KEY = "";
 
-    async function fetchMovies() {
+    async function init() {
         try {
-            const res = await fetch(API);
+            // 1. Get TMDB Key from Backend
+            const configRes = await fetch("/api/config/tmdb");
+            const configData = await configRes.json();
+            TMDB_KEY = configData.apiKey;
+
+            // 2. Load Your Movies
+            const res = await fetch("/api/movies");
             const movies = await res.json();
-            
-            if (movies.length > 0) {
-                // Set the Hero Banner to the latest movie
-                document.getElementById('hero-title').innerText = movies[0].title;
-                document.getElementById('hero-desc').innerText = movies[0].overview || "Now Streaming";
+            const trendDiv = document.getElementById('trending');
+            if(movies.length === 0) trendDiv.innerHTML = "<p style='color:#555'>No movies uploaded yet.</p>";
+            movies.forEach(m => {
+                trendDiv.innerHTML += `<div class="card" onclick="window.location.href='player.html?id=${m._id}'"><img src="${m.poster}"></div>`;
+            });
+
+            // 3. Load Upcoming Trailers from TMDB
+            if (TMDB_KEY) {
+                const tRes = await fetch(`https://api.themoviedb.org/3/movie/upcoming?api_key=${TMDB_KEY}`);
+                const tData = await tRes.json();
+                tData.results.forEach(m => {
+                    document.getElementById('upcoming').innerHTML += `
+                        <div class="card" onclick="playTrailer(${m.id})">
+                            <img src="https://image.tmdb.org/t/p/w500${m.poster_path}">
+                        </div>`;
+                });
             }
-
-            renderMovies(movies);
-        } catch (err) { console.error("Failed to load movies"); }
+        } catch (err) { console.error("Init Error:", err); }
     }
 
-    function renderMovies(movies) {
-        const trending = document.getElementById('trending-list');
-        const action = document.getElementById('action-list');
-        const horror = document.getElementById('horror-list');
-
-        movies.forEach(movie => {
-            const card = `
-                <div class="card" onclick="window.location.href='player.html?id=${movie._id}'">
-                    <img src="${movie.poster}" alt="${movie.title}">
-                    <div class="card-info">
-                        <div class="card-title">${movie.title}</div>
-                        <div style="font-size:0.7rem; color:var(--primary);">${movie.category.toUpperCase()}</div>
-                    </div>
-                </div>
-            `;
-
-            // All movies go to Trending
-            trending.innerHTML += card;
-
-            // Separate by category
-            if (movie.category === 'action') action.innerHTML += card;
-            if (movie.category === 'horror') horror.innerHTML += card;
-        });
+    async function playTrailer(id) {
+        const res = await fetch(`https://api.themoviedb.org/3/movie/${id}/videos?api_key=${TMDB_KEY}`);
+        const data = await res.json();
+        const video = data.results.find(v => v.site === 'YouTube' && v.type === 'Trailer');
+        if(video) {
+            document.getElementById('videoContainer').innerHTML = `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${video.key}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
+            document.getElementById('trailerModal').style.display = 'flex';
+        } else { alert("Trailer not found."); }
     }
 
-    // Change Nav background on scroll
-    window.onscroll = function() {
-        const nav = document.getElementById('navbar');
-        if (window.pageYOffset > 50) nav.style.background = "#0a0a0a";
-        else nav.style.background = "linear-gradient(to bottom, rgba(0,0,0,0.8), transparent)";
-    };
+    function closeTrailer() { 
+        document.getElementById('trailerModal').style.display = 'none'; 
+        document.getElementById('videoContainer').innerHTML = ''; 
+    }
 
-    fetchMovies();
+    init();
 </script>
-
-</body>
+</b
+    ody>
 </html>
