@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const multer = require("multer");
-const path = require("path"); // Added path module
+const path = require("path"); 
 const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const Movie = require("./models/Movie");
@@ -22,8 +22,8 @@ cloudinary.config({
 app.use(cors());
 app.use(express.json());
 
-// --- SERVE STATIC FILES ---
-// This line makes everything in the "public" folder accessible via URL
+// --- CRITICAL: LINKING THE PUBLIC FOLDER ---
+// Since server.js is in /backend, we go up one level (..) to find /public
 app.use(express.static(path.join(__dirname, "../public")));
 
 // Database Connection
@@ -85,7 +85,9 @@ app.post("/api/movies/upload", upload.fields([
   }
 });
 
-// Default route to serve index.html for any non-API request
+// --- SERVE THE PAGES ---
+// If the user asks for /admin.html, Express will now find it in /public.
+// This fallback ensures index.html loads for the main URL.
 app.get("*", (req, res) => {
   res.sendFile(path.join(__dirname, "../public/index.html"));
 });
