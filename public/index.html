@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movies Dunia | Official Trailers</title>
+    <title>Movies Dunia | Trailers & Series</title>
     <style>
         :root { --red: #e50914; --bg: #0a0a0a; }
         body { background: var(--bg); color: white; font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; overflow-x: hidden; }
         nav { padding: 20px 5%; display: flex; justify-content: space-between; background: linear-gradient(rgba(0,0,0,0.9), transparent); position: fixed; width: 100%; z-index: 100; box-sizing: border-box; }
-        .hero { height: 40vh; background: linear-gradient(to top, var(--bg), transparent), url('https://images.unsplash.com/photo-1536440136628-849c177e76a1?q=80&w=1000') center/cover; display: flex; align-items: flex-end; padding: 0 5% 40px; }
+        .hero { height: 40vh; background: linear-gradient(to top, var(--bg), transparent), url('https://images.unsplash.com/photo-1574375927938-d5a98e8ffe85?q=80&w=1000') center/cover; display: flex; align-items: flex-end; padding: 0 5% 40px; }
         .row { padding: 20px 0 0 5%; }
         .row-title { font-size: 1.4rem; font-weight: bold; margin-bottom: 15px; display: flex; align-items: center; gap: 10px; border-left: 4px solid var(--red); padding-left: 10px; }
         .movie-list { display: flex; overflow-x: auto; gap: 15px; padding: 10px 0 30px; scrollbar-width: none; min-height: 250px; }
@@ -17,7 +17,7 @@
         .card:hover { transform: translateY(-10px); box-shadow: 0 10px 20px rgba(229,9,20,0.2); }
         .card img { width: 100%; height: 100%; object-fit: cover; }
         #trailerModal { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.95); z-index:2000; align-items:center; justify-content:center; }
-        .loading-shimmer { color: #444; font-size: 0.8rem; text-align: center; width: 100%; }
+        .loading-shimmer { color: #444; font-size: 0.8rem; padding: 20px; }
     </style>
 </head>
 <body>
@@ -29,8 +29,8 @@
 
 <section class="hero">
     <div>
-        <h1 style="margin:0; font-size:2.8rem;">Official Trailers</h1>
-        <p style="color:#aaa;">Only movies with available official trailers are shown below.</p>
+        <h1 style="margin:0; font-size:2.8rem;">Trailers & Series</h1>
+        <p style="color:#aaa;">Trending Movies and Web Series with official trailers.</p>
     </div>
 </section>
 
@@ -40,7 +40,12 @@
 </div>
 
 <div class="row">
-    <div class="row-title">🔥 Trending Trailers</div>
+    <div class="row-title">📺 Trending Web Series</div>
+    <div id="series-trailers" class="movie-list"><div class="loading-shimmer">Fetching series...</div></div>
+</div>
+
+<div class="row">
+    <div class="row-title">🔥 Trending Movies</div>
     <div id="trending-trailers" class="movie-list"><div class="loading-shimmer">Scanning for trailers...</div></div>
 </div>
 
@@ -50,7 +55,7 @@
 </div>
 
 <div id="trailerModal">
-    <button onclick="closeTrailer()" style="position:absolute; top:20px; right:30px; color:white; background:none; border:none; font-size:3.5rem; cursor:pointer;">&times;</button>
+    <button onclick="closeTrailer()" style="position:absolute; top:20px; right:30px; color:white; background:none; border:none; font-size:3.5rem; cursor:pointer;">×</button>
     <div id="videoContainer" style="width:90%; max-width:1100px; aspect-ratio:16/9; background:#000;"></div>
 </div>
 
@@ -67,38 +72,41 @@
             const libRes = await fetch("/api/movies");
             const libMovies = await libRes.json();
             const libList = document.getElementById('library-list');
-            if(libMovies.length === 0) libList.innerHTML = "<p style='color:#333'>No uploads yet.</p>";
+            if(libMovies.length === 0) libList.innerHTML = "<p style='color:#333; margin-left:20px;'>Library Empty</p>";
             libMovies.forEach(m => {
                 libList.innerHTML += `<div class="card" onclick="window.location.href='player.html?id=${m._id}'"><img src="${m.poster}"></div>`;
             });
 
             if (TMDB_KEY) {
-                // 2. Load Global Trending with Trailers
-                fetchTrailersOnly(`https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_KEY}`, 'trending-trailers');
+                // 2. Load Trending Web Series (TV)
+                fetchTrailersOnly(`https://api.themoviedb.org/3/trending/tv/week?api_key=${TMDB_KEY}`, 'series-trailers', 'tv');
 
-                // 3. Load Indian Upcoming with Trailers
-                fetchTrailersOnly(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&region=IN&with_original_language=hi|bn&sort_by=popularity.desc`, 'indian-trailers');
+                // 3. Load Trending Movies
+                fetchTrailersOnly(`https://api.themoviedb.org/3/trending/movie/week?api_key=${TMDB_KEY}`, 'trending-trailers', 'movie');
+
+                // 4. Load Indian Upcoming (Hindi/Bengali)
+                fetchTrailersOnly(`https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_KEY}&region=IN&with_original_language=hi|bn&sort_by=popularity.desc`, 'indian-trailers', 'movie');
             }
         } catch (err) { console.error("Initialization Error", err); }
     }
 
-    async function fetchTrailersOnly(apiUrl, elementId) {
+    async function fetchTrailersOnly(apiUrl, elementId, type) {
         const res = await fetch(apiUrl);
         const data = await res.json();
         const container = document.getElementById(elementId);
-        container.innerHTML = ""; // Clear loader
+        container.innerHTML = ""; 
 
-        // For each movie, check if it has a trailer before showing it
-        for (const movie of data.results.slice(0, 20)) {
-            const vRes = await fetch(`https://api.themoviedb.org/3/movie/${movie.id}/videos?api_key=${TMDB_KEY}`);
+        for (const item of data.results.slice(0, 15)) {
+            // Check trailers. For TV shows, the endpoint is /tv/{id}/videos
+            const vRes = await fetch(`https://api.themoviedb.org/3/${type}/${item.id}/videos?api_key=${TMDB_KEY}`);
             const vData = await vRes.json();
             const trailer = vData.results.find(v => v.site === 'YouTube' && (v.type === 'Trailer' || v.type === 'Teaser'));
 
-            if (trailer && movie.poster_path) {
+            if (trailer && item.poster_path) {
                 const card = document.createElement('div');
                 card.className = 'card';
                 card.onclick = () => playTrailer(trailer.key);
-                card.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${movie.poster_path}" loading="lazy">`;
+                card.innerHTML = `<img src="https://image.tmdb.org/t/p/w500${item.poster_path}" loading="lazy">`;
                 container.appendChild(card);
             }
         }
@@ -116,7 +124,6 @@
     }
 
     init();
-</script
-    >
+</script>
 </body>
 </html>
