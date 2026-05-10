@@ -28,7 +28,7 @@ const Movie = mongoose.model('Movie', movieSchema);
 
 // --- API ROUTES ---
 
-// 1. Get All Library Movies (Uploaded by you)
+// 1. Get All Library Movies
 app.get('/api/movies', async (req, res) => {
     try {
         const movies = await Movie.find().sort({ createdAt: -1 });
@@ -38,7 +38,7 @@ app.get('/api/movies', async (req, res) => {
     }
 });
 
-// 2. Upload a New Movie (Admin)
+// 2. Upload a New Movie
 app.post('/api/movies', async (req, res) => {
     try {
         const newMovie = new Movie(req.body);
@@ -49,11 +49,11 @@ app.post('/api/movies', async (req, res) => {
     }
 });
 
-// 3. Config Route (Sends API Keys to Frontend securely)
+// 3. Config Route for Keys
 app.get('/api/config/tmdb', (req, res) => {
     res.json({ 
         apiKey: process.env.TMDB_API_KEY,
-        youtubeKey: process.env.YOUTUBE_API_KEY // Ensure this is in Render Env Vars
+        youtubeKey: process.env.YOUTUBE_API_KEY 
     });
 });
 
@@ -62,6 +62,7 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Fixed the Syntax Error here:
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
     console.log(`🚀 Server running on port ${PO
