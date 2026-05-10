@@ -1,56 +1,132 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Movies Dunia</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Movies Dunia | Watch & Download</title>
   <style>
+    :root {
+      --primary: #e50914;
+      --bg-dark: #141414;
+      --card-bg: #1f1f1f;
+    }
+
     body {
-      background: black;
+      background: var(--bg-dark);
       color: white;
-      font-family: Arial;
+      font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
       margin: 0;
+      padding-bottom: 50px;
+    }
+
+    header {
+      padding: 20px 4%;
+      background: linear-gradient(to bottom, rgba(0,0,0,0.7) 0%, transparent 100%);
     }
 
     h1 {
-      color: red;
-      padding: 15px;
+      color: var(--primary);
+      margin: 0;
+      font-size: 2rem;
+      text-transform: uppercase;
+      letter-spacing: 2px;
     }
 
     .movies {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 15px;
-      padding: 15px;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 25px;
+      padding: 20px 4%;
     }
 
     .card {
-      background: #111;
-      padding: 10px;
-      border-radius: 10px;
+      background: var(--card-bg);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: transform 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+    }
+
+    .card:hover {
+      transform: scale(1.05);
+    }
+
+    .poster-img {
+      width: 100%;
+      aspect-ratio: 2/3;
+      object-fit: cover;
+      display: block;
+    }
+
+    .card-content {
+      padding: 15px;
+    }
+
+    .card h3 {
+      margin: 0 0 10px 0;
+      font-size: 1.1rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .overview {
+      font-size: 0.85rem;
+      color: #bbb;
+      height: 40px;
+      overflow: hidden;
+      margin-bottom: 15px;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
     }
 
     video {
       width: 100%;
-      border-radius: 8px;
+      background: #000;
+      margin-bottom: 10px;
+      border-radius: 4px;
+    }
+
+    .btn-group {
+      display: flex;
+      gap: 10px;
     }
 
     button {
-      margin-top: 5px;
-      width: 100%;
-      padding: 8px;
-      background: red;
+      flex: 1;
+      padding: 10px;
+      background: var(--primary);
       border: none;
       color: white;
-      border-radius: 5px;
+      font-weight: bold;
+      border-radius: 4px;
       cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    button:hover {
+      background: #b20710;
+    }
+
+    .no-movies {
+      grid-column: 1 / -1;
+      text-align: center;
+      padding: 50px;
+      color: #666;
     }
   </style>
 </head>
 
 <body>
 
-<h1>Movies Dunia</h1>
+<header>
+  <h1>Movies Dunia</h1>
+</header>
 
-<div class="movies" id="movies"></div>
+<div class="movies" id="movies">
+  <!-- Movies will be injected here -->
+</div>
 
 <script>
 const API = "https://movies-dunia-1.onrender.com/api/movies";
@@ -62,31 +138,50 @@ async function loadMovies() {
 
     const container = document.getElementById("movies");
 
-    if (data.length === 0) {
-      container.innerHTML = "<h3>No Movies Yet</h3>";
+    if (!data || data.length === 0) {
+      container.innerHTML = "<div class='no-movies'><h3>No Movies Found</h3><p>Check back later!</p></div>";
       return;
     }
 
     container.innerHTML = data.map(movie => `
       <div class="card">
-        <h3>${movie.title}</h3>
-        <video controls src="${movie.videoUrl}"></video>
-        <button onclick="downloadVideo('${movie.videoUrl}')">
-          Download
-        </button>
+        <img src="${movie.poster || 'https://via.placeholder.com/500x750?text=No+Poster'}" 
+             alt="${movie.title}" 
+             class="poster-img">
+             
+        <div class="card-content">
+          <h3 title="${movie.title}">${movie.title}</h3>
+          <p class="overview">${movie.overview || 'No description available.'}</p>
+          
+          <video controls preload="none">
+            <source src="${movie.videoUrl}" type="video/mp4">
+            Your browser does not support the video tag.
+          </video>
+          
+          <div class="btn-group">
+            <button onclick="downloadVideo('${movie.videoUrl}', '${movie.title}')">
+              Download
+            </button>
+          </div>
+        </div>
       </div>
     `).join("");
 
   } catch (err) {
-    console.log(err);
+    console.error("Error loading movies:", err);
+    document.getElementById("movies").innerHTML = "<p style='text-align:center'>Error connecting to server.</p>";
   }
 }
 
-function downloadVideo(url) {
+function downloadVideo(url, title) {
   const a = document.createElement("a");
   a.href = url;
-  a.download = "movie.mp4";
+  // Sanitizing title for filename
+  const fileName = title.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+  a.download = `${fileName}.mp4`;
+  document.body.appendChild(a);
   a.click();
+  document.body.removeChild(a);
 }
 
 loadMovies();
