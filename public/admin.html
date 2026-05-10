@@ -1,32 +1,32 @@
-  const API_BASE = "https://movies-dunia.onrender.com/api/movies";
+const API_BASE = "https://movies-dunia.onrender.com/api/movies";
 
-  // --- DELETE FUNCTION ---
-  async function deleteMovie(id) {
+// --- DELETE FUNCTION ---
+async function deleteMovie(id) {
     const password = document.getElementById("pass").value;
-    if(!password) return alert("Enter password to delete.");
-    if(!confirm("Are you sure?")) return;
+    if (!password) return alert("Enter password to delete.");
+    if (!confirm("Are you sure?")) return;
 
     try {
-      const res = await fetch(`${API_BASE}/${id}`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password })
-      });
-      const data = await res.json();
+        const res = await fetch(`${API_BASE}/${id}`, {
+            method: "DELETE",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ password })
+        });
+        const data = await res.json();
 
-      if(res.ok) { 
-        alert("Deleted!"); 
-        loadMovies(); 
-      } else { 
-        alert("Delete failed: " + (data.error || "Unknown Error")); 
-      }
+        if (res.ok) {
+            alert("Deleted!");
+            loadMovies();
+        } else {
+            alert("Delete failed: " + (data.error || "Unknown Error"));
+        }
     } catch (err) {
-      alert("Network Error: Could not connect to server.");
+        alert("Network Error: Could not connect to server.");
     }
-  }
+}
 
-  // --- UPLOAD FUNCTION WITH DETAILED ERROR CODES ---
-  async function uploadMovie() {
+// --- UPLOAD FUNCTION ---
+async function uploadMovie() {
     const btn = document.getElementById("upBtn");
     const container = document.getElementById("progContainer");
     const bar = document.getElementById("progBar");
@@ -46,7 +46,6 @@
     formData.append("video", video);
     formData.append("poster", document.getElementById("poster").files[0]);
 
-    // Reset UI for new attempt
     btn.disabled = true;
     container.style.display = "block";
     bar.style.width = "10%";
@@ -54,55 +53,58 @@
     status.innerText = "⏳ Connecting to server...";
 
     try {
-      const res = await fetch(API_BASE + "/upload", {
-        method: "POST",
-        body: formData
-      });
+        const res = await fetch(API_BASE + "/upload", {
+            method: "POST",
+            body: formData
+        });
 
-      const data = await res.json();
+        const data = await res.json();
 
-      if (res.ok) {
-        bar.style.width = "100%";
-        status.innerText = "✅ Success! Refreshing...";
-        setTimeout(() => location.reload(), 1500);
-      } else {
-        // Handle specific server errors (401, 400, 500)
-        let errorMsg = "Upload Failed";
-        if (res.status === 401) errorMsg = "❌ Invalid Admin Password";
-        else if (res.status === 413) errorMsg = "❌ File too large for server";
-        else if (data.error) errorMsg = `❌ Server Error: ${data.error}`;
-        
-        throw new Error(errorMsg);
-      }
+        if (res.ok) {
+            bar.style.width = "100%";
+            status.innerText = "✅ Success! Refreshing...";
+            setTimeout(() => location.reload(), 1500);
+        } else {
+            let errorMsg = "Upload Failed";
+            if (res.status === 401) errorMsg = "❌ Invalid Admin Password";
+            else if (res.status === 413) errorMsg = "❌ File too large for server";
+            else if (data.error) errorMsg = `❌ Server Error: ${data.error}`;
+            throw new Error(errorMsg);
+        }
     } catch (err) {
-      // Handle Network or logic errors
-      bar.style.width = "100%";
-      bar.style.background = "#ff4444";
-      status.style.color = "#ff4444";
-      status.innerText = err.message || "❌ Connection Timeout";
-      console.error("Upload Error:", err);
-      
-      // Re-enable button so they can fix and try again
-      btn.innerText = "Try Again";
+        bar.style.width = "100%";
+        bar.style.background = "#ff4444";
+        status.style.color = "#ff4444";
+        status.innerText = err.message || "❌ Connection Timeout";
+        btn.innerText = "Try Again";
     } finally {
-      btn.disabled = false;
+        btn.disabled = false;
     }
-  }
+}
 
-  async function loadMovies() {
+// --- LOAD LIST FUNCTION ---
+async function loadMovies() {
     try {
-      const res = await fetch(API_BASE);
-      const movies = await res.json();
-      document.getElementById("list").innerHTML = movies.map(m => `
-        <div class="movie-item">
-          <span>${m.title}</span>
-          <button class="del-btn" onclick="deleteMovie('${m._id}')">Delete</button>
-        </div>
-      `).join('');
-    } catch (e) { 
-      document.getElementById("list").innerText = "Error loading movies."; 
-    }
-  }
+        const res = await fetch(API_BASE);
+        const movies = await res.json();
+        const listDiv = document.getElementById("list");
+        
+        if (movies.length === 0) {
+            listDiv.innerHTML = "<p style='color: #666;'>No movies found in database.</p>";
+            return;
+        }
 
-  l
-oadMovies();
+        listDiv.innerHTML = movies.map(m => `
+            <div class="movie-item" style="display: flex; justify-content: space-between; align-items: center; background: #1a1a1a; padding: 10px; margin-bottom: 8px; border-radius: 5px;">
+                <span>${m.title}</span>
+                <button class="del-btn" onclick="deleteMovie('${m._id}')" style="background: #333; color: #ff4444; border: 1px solid #444; padding: 5px 10px; cursor: pointer;">Delete</button>
+            </div>
+        `).join('');
+    } catch (e) {
+        document.getElementById("list").innerText = "Error loading movies.";
+    }
+}
+
+// Initialize
+
+loadMovies();
