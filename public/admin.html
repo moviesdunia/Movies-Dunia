@@ -1,41 +1,114 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-  <title>Admin Upload</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel | Movies Dunia</title>
+  <style>
+    body { background: #141414; color: white; font-family: sans-serif; display: flex; justify-content: center; padding: 40px; }
+    .container { background: #1f1f1f; padding: 30px; border-radius: 10px; width: 100%; max-width: 500px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+    h1 { color: #e50914; margin-bottom: 20px; text-align: center; }
+    input, textarea, select { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: 1px solid #333; background: #2b2b2b; color: white; box-sizing: border-box; }
+    label { font-size: 0.9rem; color: #bbb; }
+    button { width: 100%; padding: 15px; background: #e50914; border: none; color: white; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 20px; }
+    button:disabled { background: #555; cursor: not-allowed; }
+    #status { margin-top: 15px; text-align: center; font-weight: bold; }
+  </style>
 </head>
-
 <body>
 
-<h1>Upload Movie</h1>
+<div class="container">
+  <h1>Upload Movie</h1>
+  
+  <input type="text" id="title" placeholder="Movie Title (Required)">
+  
+  <select id="category">
+    <option value="action">Action</option>
+    <option value="comedy">Comedy</option>
+    <option value="drama">Drama</option>
+    <option value="horror">Horror</option>
+    <option value="sci-fi">Sci-Fi</option>
+    <option value="romance">Romance</option>
+    <option value="thriller">Thriller</option>
+  </select>
 
-<input type="text" id="title" placeholder="Title"><br><br>
-<input type="text" id="language" placeholder="Language"><br><br>
-<input type="file" id="video"><br><br>
+  <input type="text" id="language" placeholder="Language (e.g. Hindi, English)">
+  
+  <textarea id="overview" rows="3" placeholder="Movie Description/Overview"></textarea>
 
-<button onclick="upload()">Upload</button>
+  <label>Select Poster Image:</label>
+  <input type="file" id="poster" accept="image/*">
+
+  <label>Select Video File:</label>
+  <input type="file" id="video" accept="video/*">
+
+  <button id="uploadBtn" onclick="upload()">🚀 Start Upload</button>
+  
+  <div id="status"></div>
+</div>
 
 <script>
-const API = "https://movies-dunia-1.onrender.com"; // 👈 SAME URL
+// Make sure this matches your Render URL exactly
+const API = "https://movies-dunia.onrender.com/api/movies/upload";
 
 async function upload() {
+  const btn = document.getElementById("uploadBtn");
+  const status = document.getElementById("status");
+  
+  // Get values
   const title = document.getElementById("title").value;
+  const category = document.getElementById("category").value;
   const language = document.getElementById("language").value;
-  const file = document.getElementById("video").files[0];
+  const overview = document.getElementById("overview").value;
+  const videoFile = document.getElementById("video").files[0];
+  const posterFile = document.getElementById("poster").files[0];
+
+  if (!title || !videoFile) {
+    alert("Title and Video are required!");
+    return;
+  }
 
   const formData = new FormData();
   formData.append("title", title);
+  formData.append("category", category);
   formData.append("language", language);
-  formData.append("video", file);
+  formData.append("overview", overview);
+  formData.append("video", videoFile);
+  if (posterFile) formData.append("poster", posterFile);
 
-  const res = await fetch(API + "/api/upload", {
-    method: "POST",
-    body: formData
-  });
+  try {
+    btn.disabled = true;
+    btn.innerText = "Uploading... Please wait";
+    status.innerText = "⏳ Sending to Cloudinary (this may take a few minutes)...";
+    status.style.color = "orange";
 
-  const data = await res.json();
-  alert("Uploaded!");
+    const res = await fetch(API, {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await res.json();
+
+    if (res.ok) {
+      status.innerText = "✅ Successfully Uploaded!";
+      status.style.color = "lightgreen";
+      alert("Movie Added to Database!");
+      // Optional: clear form
+      document.querySelectorAll('input').forEach(i => i.value = '');
+    } else {
+      throw new Error(data.error || "Upload failed");
+    }
+  } catch (err) {
+    status.innerText = "❌ Error: " + err.message;
+    status.style.color = "#e50914";
+    console.error(err);
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "🚀 Start Upload";
+  }
 }
 </script>
 
-</body>
+<
+  /body>
 </html>
