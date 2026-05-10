@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 const dotenv = require("dotenv");
 const multer = require("multer");
+const path = require("path"); // Added path module
 const cloudinary = require("cloudinary").v2;
 const { CloudinaryStorage } = require("multer-storage-cloudinary");
 const Movie = require("./models/Movie");
@@ -20,6 +21,10 @@ cloudinary.config({
 // Middleware
 app.use(cors());
 app.use(express.json());
+
+// --- SERVE STATIC FILES ---
+// This line makes everything in the "public" folder accessible via URL
+app.use(express.static(path.join(__dirname, "../public")));
 
 // Database Connection
 mongoose.connect(process.env.MONGO_URI || "")
@@ -40,10 +45,7 @@ const storage = new CloudinaryStorage({
 
 const upload = multer({ storage: storage });
 
-// --- ROUTES ---
-
-// Health Check
-app.get("/", (req, res) => res.send("Movies Dunia Server is Running! 🚀"));
+// --- API ROUTES ---
 
 // Get All Movies
 app.get("/api/movies", async (req, res) => {
@@ -62,7 +64,6 @@ app.post("/api/movies/upload", upload.fields([
 ]), async (req, res) => {
   try {
     const { title, category, language, overview } = req.body;
-    
     const videoUrl = req.files['video'] ? req.files['video'][0].path : null;
     const posterUrl = req.files['poster'] ? req.files['poster'][0].path : null;
 
@@ -84,6 +85,11 @@ app.post("/api/movies/upload", upload.fields([
   }
 });
 
+// Default route to serve index.html for any non-API request
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "../public/index.html"));
+});
+
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => console.log(`🚀 Server running on po
-rt ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on p
+ort ${PORT}`));
