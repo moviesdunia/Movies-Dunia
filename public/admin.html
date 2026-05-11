@@ -3,81 +3,141 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Movie Manager | Admin</title>
+    <title>Admin Panel | Movies Dunia</title>
     <style>
         :root { --red: #e50914; --dark: #141414; }
         body { background: #000; color: white; font-family: sans-serif; margin: 0; padding: 20px; }
-        .admin-card { background: var(--dark); padding: 25px; border-radius: 10px; max-width: 500px; margin: auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        .container { max-width: 600px; margin: auto; }
+        .admin-card { background: var(--dark); padding: 30px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
         h2 { color: var(--red); text-align: center; margin-top: 0; }
         .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; color: #aaa; font-size: 0.9rem; }
-        input, select { width: 100%; padding: 12px; background: #222; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background: var(--red); border: none; color: white; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 10px; }
-        button:hover { background: #b20710; }
-        .footer-hint { font-size: 0.8rem; color: #666; text-align: center; margin-top: 15px; }
+        label { display: block; margin-bottom: 5px; color: #888; font-size: 0.8rem; font-weight: bold; }
+        input, select { width: 100%; padding: 12px; background: #222; border: 1px solid #333; color: white; border-radius: 6px; box-sizing: border-box; }
+        input:focus { border-color: var(--red); outline: none; }
+        .main-btn { width: 100%; padding: 15px; background: var(--red); border: none; color: white; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; transition: 0.3s; }
+        
+        .library-section { background: var(--dark); padding: 25px; border-radius: 12px; }
+        .movie-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #333; }
+        .movie-row:last-child { border-bottom: none; }
+        .del-btn { background: transparent; color: #ff4444; border: 1px solid #444; padding: 6px 12px; border-radius: 4px; cursor: pointer; transition: 0.3s; }
+        .del-btn:hover { background: #ff4444; color: white; }
     </style>
 </head>
 <body>
 
-<div class="admin-card">
-    <h2>Movie Manager</h2>
-    
-    <div class="input-group">
-        <label>Movie Title</label>
-        <input type="text" id="title" placeholder="e.g. Pushpa 2">
+<div class="container">
+    <div class="admin-card">
+        <h2>Movie Manager</h2>
+        
+        <div class="input-group">
+            <label>Admin Password</label>
+            <input type="password" id="adminPass" placeholder="Required for all actions">
+        </div>
+
+        <div class="input-group">
+            <label>Movie Title</label>
+            <input type="text" id="title" placeholder="e.g. Pushpa 2">
+        </div>
+
+        <div class="input-group">
+            <label>Poster URL</label>
+            <input type="text" id="poster" placeholder="Link to image (.jpg, .png)">
+        </div>
+
+        <div class="input-group">
+            <label>Video URL / Telegram Link</label>
+            <input type="text" id="videoUrl" placeholder="Direct MP4 link or t.me post link">
+        </div>
+
+        <div class="input-group">
+            <label>Category</label>
+            <select id="category">
+                <option value="Action">Action</option>
+                <option value="Desi">Desi</option>
+                <option value="Hollywood">Hollywood</option>
+                <option value="Telegram Exclusive">Telegram Exclusive</option>
+            </select>
+        </div>
+
+        <button class="main-btn" onclick="addMovie()">Add Movie</button>
     </div>
 
-    <div class="input-group">
-        <label>Poster Image URL</label>
-        <input type="text" id="poster" placeholder="Paste link to image here">
-    </div>
-
-    <div class="input-group">
-        <label>Video URL or Telegram Link</label>
-        <input type="text" id="videoUrl" placeholder="Paste .mp4 or t.me link here">
-    </div>
-
-    <div class="input-group">
-        <label>Category</label>
-        <select id="category">
-            <option value="Action">Action</option>
-            <option value="Hollywood">Hollywood</option>
-            <option value="Desi">Desi</option>
-            <option value="Telegram Exclusive">Telegram Exclusive</option>
-        </select>
-    </div>
-
-    <button onclick="addMovie()">Add to Website</button>
-
-    <div class="footer-hint">
-        Tip: Paste Telegram post links to open in the app automatically.
+    <div class="library-section">
+        <h3 style="margin-top:0;">Current Library</h3>
+        <div id="manage-list">Loading movies...</div>
     </div>
 </div>
 
 <script>
+    // 1. Fetch and show the list of movies
+    async function loadLibrary() {
+        const res = await fetch('/api/movies');
+        const movies = await res.json();
+        const container = document.getElementById('manage-list');
+        container.innerHTML = '';
+        
+        if(movies.length === 0) container.innerHTML = '<p style="color:#666;">No movies in library.</p>';
+
+        movies.forEach(m => {
+            container.innerHTML += `
+                <div class="movie-row">
+                    <span>${m.title}</span>
+                    <button class="del-btn" onclick="deleteMovie('${m._id}')">Delete</button>
+                </div>
+            `;
+        });
+    }
+
+    // 2. Add a movie
     async function addMovie() {
+        const adminPassword = document.getElementById('adminPass').value;
         const title = document.getElementById('title').value;
         const poster = document.getElementById('poster').value;
         const videoUrl = document.getElementById('videoUrl').value;
         const category = document.getElementById('category').value;
 
-        if(!title || !poster || !videoUrl) return alert("Please fill all fields!");
+        if(!adminPassword || !title || !videoUrl) return alert("Please fill Title, Video URL, and Password!");
 
         const res = await fetch('/api/movies', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, poster, videoUrl, category })
+            body: JSON.stringify({ title, poster, videoUrl, category, adminPassword })
         });
 
         if (res.ok) {
-            alert("Success! Movie added.");
-            window.location.href = "/";
+            alert("✅ Movie Added Successfully!");
+            document.getElementById('title').value = '';
+            document.getElementById('videoUrl').value = '';
+            loadLibrary();
         } else {
-            alert("Error adding movie.");
+            alert("❌ Failed to add. Check your password.");
         }
     }
+
+    // 3. Delete a movie
+    async function deleteMovie(id) {
+        const adminPassword = document.getElementById('adminPass').value;
+        if(!adminPassword) return alert("Enter Admin Password first!");
+
+        if(!confirm("Are you sure you want to delete this movie?")) return;
+
+        const res = await fetch(`/api/movies/${id}`, {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ adminPassword })
+        });
+
+        if (res.ok) {
+            alert("🗑️ Movie Deleted.");
+            loadLibrary();
+        } else {
+            alert("❌ Delete failed. Check password.");
+        }
+    }
+
+    // Initial Load
+    loadLibrary();
 </script>
 
-</bo
-    dy>
+</body>
 </html>
