@@ -38,15 +38,13 @@ app.get('/api/movies', async (req, res) => {
     }
 });
 
-// 2. Upload/Add a New Movie (With Password Check)
+// 2. Upload/Add a New Movie
 app.post('/api/movies', async (req, res) => {
     try {
         const { title, poster, videoUrl, category, adminPassword } = req.body;
-
         if (adminPassword !== "dunia2026") {
             return res.status(401).json({ error: "Incorrect Admin Password" });
         }
-
         const newMovie = new Movie({ title, poster, videoUrl, category });
         await newMovie.save();
         res.json({ message: "Movie added successfully!" });
@@ -55,15 +53,13 @@ app.post('/api/movies', async (req, res) => {
     }
 });
 
-// 3. Delete a Movie (With Password Check)
+// 3. Delete a Movie
 app.delete('/api/movies/:id', async (req, res) => {
     try {
         const { adminPassword } = req.body;
-
         if (adminPassword !== "dunia2026") {
             return res.status(401).json({ error: "Incorrect Admin Password" });
         }
-
         await Movie.findByIdAndDelete(req.params.id);
         res.json({ message: "Deleted successfully" });
     } catch (err) {
@@ -84,8 +80,8 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// FINAL STARTUP - Keep these lines exactly as they are
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, () => {
-    console.log('🚀 Server running on port
-                ' + PORT);
+app.listen(PORT, function() {
+    console.log("Server online on port " + PORT);
 });
