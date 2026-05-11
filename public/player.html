@@ -3,42 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stream | Movies Dunia</title>
+    <title>Playing Now | Movies Dunia</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;700&display=swap" rel="stylesheet">
     <style>
-        body { background: #000; color: white; font-family: sans-serif; margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; overflow: hidden; }
-        .back-btn { position: absolute; top: 20px; left: 20px; color: #e50914; text-decoration: none; font-weight: bold; font-size: 1.1rem; z-index: 10; }
-        .player-box { width: 95%; max-width: 1100px; aspect-ratio: 16/9; background: #0a0a0a; border: 1px solid #333; }
-        video { width: 100%; height: 100%; }
-        h1 { margin-top: 20px; font-size: 1.5rem; text-align: center; color: #ccc; }
+        :root {
+            --primary: #e50914;
+            --bg: #050505;
+        }
+
+        body {
+            background-color: var(--bg);
+            color: white;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        /* Back Button */
+        .back-nav {
+            width: 100%;
+            padding: 20px 5%;
+            box-sizing: border-box;
+        }
+
+        .btn-back {
+            color: #888;
+            text-decoration: none;
+            font-weight: 600;
+            transition: 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-back:hover { color: var(--primary); }
+
+        /* Video Theater Container */
+        .theater-container {
+            width: 95%;
+            max-width: 1100px;
+            margin-top: 20px;
+            position: relative;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 100px rgba(229, 9, 20, 0.1);
+            border-radius: 15px;
+            overflow: hidden;
+            background: #000;
+            aspect-ratio: 16/9;
+        }
+
+        iframe, video {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+
+        /* Movie Info Area */
+        .movie-details {
+            width: 95%;
+            max-width: 1100px;
+            margin-top: 30px;
+            padding-bottom: 50px;
+        }
+
+        .movie-details h1 {
+            font-size: 2.5rem;
+            margin: 0 0 10px 0;
+            font-weight: 800;
+        }
+
+        .meta-tags {
+            display: flex;
+            gap: 15px;
+            color: #aaa;
+            font-size: 0.9rem;
+            margin-bottom: 20px;
+        }
+
+        .meta-tags span {
+            background: #1a1a1a;
+            padding: 4px 12px;
+            border-radius: 5px;
+            border: 1px solid #333;
+        }
+
+        .category-tag {
+            color: var(--primary) !important;
+            border-color: rgba(229, 9, 20, 0.3) !important;
+        }
+
+        /* Ambient Glow Effect */
+        .ambient-glow {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            height: 400px;
+            background: radial-gradient(circle at center, rgba(229, 9, 20, 0.15) 0%, transparent 70%);
+            z-index: -1;
+            pointer-events: none;
+        }
     </style>
 </head>
 <body>
 
-<a href="/" class="back-btn">← Back to Movies Dunia</a>
+<div class="ambient-glow"></div>
 
-<div class="player-box">
-    <video id="v-player" controls autoplay controlsList="nodownload"></video>
+<div class="back-nav">
+    <a href="/" class="btn-back">← Back to Library</a>
 </div>
-<h1 id="v-title">Loading Movie...</h1>
+
+<div class="theater-container" id="player-box">
+    </div>
+
+<div class="movie-details">
+    <div class="meta-tags">
+        <span class="category-tag" id="display-category">Category</span>
+        <span>4K Ultra HD</span>
+        <span>2026</span>
+    </div>
+    <h1 id="display-title">Loading Movie...</h1>
+    <p style="color: #888; max-width: 700px; line-height: 1.6;">
+        You are watching a high-quality stream hosted on Movies Dunia. Ensure you have a stable internet connection for the best experience.
+    </p>
+</div>
 
 <script>
-    async function load() {
-        const id = new URLSearchParams(window.location.search).get('id');
-        if(!id) return window.location.href = '/';
+    async function initPlayer() {
+        // 1. Get the ID from the URL
+        const params = new URLSearchParams(window.location.search);
+        const movieId = params.get('id');
 
-        const movies = await fetch('/api/movies').then(r => r.json());
-        const movie = movies.find(m => m._id === id);
-
-        if(movie) {
-            document.getElementById('v-player').src = movie.videoUrl;
-            document.getElementById('v-title').innerText = movie.title;
-            document.title = movie.title + " | Watching Now";
-        } else {
-            alert("Movie not found.");
+        if (!movieId) {
             window.location.href = '/';
+            return;
+        }
+
+        try {
+            // 2. Fetch the specific movie details from your backend
+            const res = await fetch('/api/movies');
+            const movies = await res.json();
+            const movie = movies.find(m => m._id === movieId);
+
+            if (movie) {
+                document.getElementById('display-title').innerText = movie.title;
+                document.getElementById('display-category').innerText = movie.category;
+                document.title = movie.title + " | Movies Dunia";
+
+                const playerBox = document.getElementById('player-box');
+                
+                // 3. Check if it's a link or a direct video
+                if (movie.videoUrl.includes('youtube.com') || movie.videoUrl.includes('youtu.be')) {
+                    // Handle Youtube Links
+                    let ytId = movie.videoUrl.split('v=')[1] || movie.videoUrl.split('/').pop();
+                    playerBox.innerHTML = `<iframe src="https://www.youtube.com/embed/${ytId}?autoplay=1" allowfullscreen allow="autoplay"></iframe>`;
+                } else {
+                    // Handle Direct Links (.mp4, Cloudinary, etc.)
+                    playerBox.innerHTML = `
+                        <video controls autoplay>
+                            <source src="${movie.videoUrl}" type="video/mp4">
+                            Your browser does not support the video tag.
+                        </video>`;
+                }
+            } else {
+                alert("Movie not found!");
+                window.location.href = '/';
+            }
+        } catch (error) {
+            console.error("Player Error:", error);
         }
     }
-    load();
+
+    initPlayer();
 </script>
+
 </body>
 </html>
