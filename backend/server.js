@@ -2,86 +2,65 @@ const express = require('express');
 const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
+const multer = require('multer');
+const cloudinary = require('cloudinary').v2;
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
 require('dotenv').config();
 
 const app = express();
-
-// Middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
+// Cloudinary Setup
+cloudinary.config({
+    cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+    api_key: process.env.CLOUDINARY_API_KEY,
+    api_secret: process.env.CLOUDINARY_API_SECRET
+});
+
+const storage = new CloudinaryStorage({
+    cloudinary: cloudinary,
+    params: { folder: 'movie_posters', allowed_formats: ['jpg', 'png'] }
+});
+const upload = multer({ storage: storage });
+
 // MongoDB Connection
-mongoose.connect(process.env.MONGO_URI)
-    .then(() => console.log('✅ MongoDB Connected'))
-    .catch(err => console.error('❌ MongoDB Connection Error:', err));
+mongoose.connect(process.env.MONGO_URI).then(() => console.log('✅ DB Connected'));
 
-// Movie Schema
-const movieSchema = new mongoose.Schema({
-    title: String,
-    videoUrl: String,
-    poster: String,
-    category: String,
-    createdAt: { type: Date, default: Date.now }
-});
-const Movie = mongoose.model('Movie', movieSchema);
+const Movie = mongoose.model('Movie', new mongoose.Schema({
+    title: String, videoUrl: String, poster: String, category: String, createdAt: { type: Date, default: Date.now }
+}));
 
-// --- API ROUTES ---
-
-// 1. Get All Library Movies
+// API: Get Movies
 app.get('/api/movies', async (req, res) => {
-    try {
-        const movies = await Movie.find().sort({ createdAt: -1 });
-        res.json(movies);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    const movies = await Movie.find().sort({ createdAt: -1 });
+    res.json(movies);
 });
 
-// 2. Upload/Add a New Movie
-app.post('/api/movies', async (req, res) => {
+// API: Add Movie with Image Upload
+app.post('/api/movies', upload.single('poster'), async (req, res) => {
     try {
-        const { title, poster, videoUrl, category, adminPassword } = req.body;
-        if (adminPassword !== "dunia2026") {
-            return res.status(401).json({ error: "Incorrect Admin Password" });
-        }
-        const newMovie = new Movie({ title, poster, videoUrl, category });
+        const { title, videoUrl, category, adminPassword } = req.body;
+        if (adminPassword !== "dunia2026") return res.status(401).json({ error: "Wrong Password" });
+        
+        const posterUrl = req.file ? req.file.path : "";
+        const newMovie = new Movie({ title, poster: posterUrl, videoUrl, category });
         await newMovie.save();
-        res.json({ message: "Movie added successfully!" });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+        res.json({ message: "Success" });
+    } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
-// 3. Delete a Movie
+// API: Delete Movie
 app.delete('/api/movies/:id', async (req, res) => {
-    try {
-        const { adminPassword } = req.body;
-        if (adminPassword !== "dunia2026") {
-            return res.status(401).json({ error: "Incorrect Admin Password" });
-        }
-        await Movie.findByIdAndDelete(req.params.id);
-        res.json({ message: "Deleted successfully" });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    if (req.body.adminPassword !== "dunia2026") return res.status(401).json({ error: "Wrong Password" });
+    await Movie.findByIdAndDelete(req.params.id);
+    res.json({ message: "Deleted" });
 });
 
-// 4. Config Route for API Keys
 app.get('/api/config/tmdb', (req, res) => {
-    res.json({ 
-        apiKey: process.env.TMDB_API_KEY,
-        youtubeKey: process.env.YOUTUBE_API_KEY 
-    });
+    res.json({ apiKey: process.env.TMDB_API_KEY, youtubeKey: process.env.YOUTUBE_API_KEY });
 });
 
-// Serve Frontend
-app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
-
-// FINAL STARTUP - Keep these lines exactly as they are
 const PORT = process.env.PORT || 10000;
-app.listen(PORT, function() {
-    console.log("Server online on port " + PORT);
-});
+app.listen(PORT, () => console.log(`🚀 Server on ${PORT}`));
