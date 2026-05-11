@@ -38,18 +38,40 @@ app.get('/api/movies', async (req, res) => {
     }
 });
 
-// 2. Upload a New Movie
+// 2. Upload/Add a New Movie (With Password Check)
 app.post('/api/movies', async (req, res) => {
     try {
-        const newMovie = new Movie(req.body);
+        const { title, poster, videoUrl, category, adminPassword } = req.body;
+
+        if (adminPassword !== "dunia2026") {
+            return res.status(401).json({ error: "Incorrect Admin Password" });
+        }
+
+        const newMovie = new Movie({ title, poster, videoUrl, category });
         await newMovie.save();
-        res.json({ message: "Movie added to library!" });
+        res.json({ message: "Movie added successfully!" });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
 });
 
-// 3. Config Route for Keys
+// 3. Delete a Movie (With Password Check)
+app.delete('/api/movies/:id', async (req, res) => {
+    try {
+        const { adminPassword } = req.body;
+
+        if (adminPassword !== "dunia2026") {
+            return res.status(401).json({ error: "Incorrect Admin Password" });
+        }
+
+        await Movie.findByIdAndDelete(req.params.id);
+        res.json({ message: "Deleted successfully" });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 4. Config Route for API Keys
 app.get('/api/config/tmdb', (req, res) => {
     res.json({ 
         apiKey: process.env.TMDB_API_KEY,
@@ -62,8 +84,8 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// Using standard strings to prevent any template literal SyntaxErrors
 const PORT = process.env.PORT || 10000;
 app.listen(PORT, () => {
-    console.log('🚀 Server running on port ' + PORT);
+    console.log('🚀 Server running on port
+                ' + PORT);
 });
