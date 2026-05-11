@@ -1,143 +1,72 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel | Movies Dunia</title>
+    <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | Movies Dunia</title>
     <style>
-        :root { --red: #e50914; --dark: #141414; }
-        body { background: #000; color: white; font-family: sans-serif; margin: 0; padding: 20px; }
-        .container { max-width: 600px; margin: auto; }
-        .admin-card { background: var(--dark); padding: 30px; border-radius: 12px; margin-bottom: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
-        h2 { color: var(--red); text-align: center; margin-top: 0; }
-        .input-group { margin-bottom: 15px; }
-        label { display: block; margin-bottom: 5px; color: #888; font-size: 0.8rem; font-weight: bold; }
-        input, select { width: 100%; padding: 12px; background: #222; border: 1px solid #333; color: white; border-radius: 6px; box-sizing: border-box; }
-        input:focus { border-color: var(--red); outline: none; }
-        .main-btn { width: 100%; padding: 15px; background: var(--red); border: none; color: white; font-weight: bold; border-radius: 6px; cursor: pointer; font-size: 1rem; transition: 0.3s; }
-        
-        .library-section { background: var(--dark); padding: 25px; border-radius: 12px; }
-        .movie-row { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid #333; }
-        .movie-row:last-child { border-bottom: none; }
-        .del-btn { background: transparent; color: #ff4444; border: 1px solid #444; padding: 6px 12px; border-radius: 4px; cursor: pointer; transition: 0.3s; }
-        .del-btn:hover { background: #ff4444; color: white; }
+        body { background: #000; color: white; font-family: sans-serif; padding: 20px; }
+        .box { background: #111; padding: 20px; border-radius: 10px; max-width: 500px; margin: auto; }
+        input, select, button { width: 100%; padding: 12px; margin: 10px 0; border-radius: 5px; border: none; }
+        input, select { background: #222; color: white; border: 1px solid #333; }
+        button { background: #e50914; color: white; font-weight: bold; cursor: pointer; }
+        .movie-row { display: flex; justify-content: space-between; padding: 10px; border-bottom: 1px solid #222; }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <div class="admin-card">
-        <h2>Movie Manager</h2>
-        
-        <div class="input-group">
-            <label>Admin Password</label>
-            <input type="password" id="adminPass" placeholder="Required for all actions">
-        </div>
-
-        <div class="input-group">
-            <label>Movie Title</label>
-            <input type="text" id="title" placeholder="e.g. Pushpa 2">
-        </div>
-
-        <div class="input-group">
-            <label>Poster URL</label>
-            <input type="text" id="poster" placeholder="Link to image (.jpg, .png)">
-        </div>
-
-        <div class="input-group">
-            <label>Video URL / Telegram Link</label>
-            <input type="text" id="videoUrl" placeholder="Direct MP4 link or t.me post link">
-        </div>
-
-        <div class="input-group">
-            <label>Category</label>
-            <select id="category">
-                <option value="Action">Action</option>
-                <option value="Desi">Desi</option>
-                <option value="Hollywood">Hollywood</option>
-                <option value="Telegram Exclusive">Telegram Exclusive</option>
-            </select>
-        </div>
-
-        <button class="main-btn" onclick="addMovie()">Add Movie</button>
+    <div class="box">
+        <h2>Add Movie</h2>
+        <input type="password" id="pass" placeholder="Admin Password">
+        <input type="text" id="title" placeholder="Title">
+        <input type="text" id="url" placeholder="Video URL / Telegram Link">
+        <label>Poster Image:</label>
+        <input type="file" id="poster" accept="image/*">
+        <select id="cat">
+            <option value="Action">Action</option>
+            <option value="Desi">Desi</option>
+            <option value="Telegram">Telegram Exclusive</option>
+        </select>
+        <button onclick="add()">Add Movie</button>
+        <hr>
+        <h3>Manage Library</h3>
+        <div id="list"></div>
     </div>
 
-    <div class="library-section">
-        <h3 style="margin-top:0;">Current Library</h3>
-        <div id="manage-list">Loading movies...</div>
-    </div>
-</div>
-
-<script>
-    // 1. Fetch and show the list of movies
-    async function loadLibrary() {
-        const res = await fetch('/api/movies');
-        const movies = await res.json();
-        const container = document.getElementById('manage-list');
-        container.innerHTML = '';
-        
-        if(movies.length === 0) container.innerHTML = '<p style="color:#666;">No movies in library.</p>';
-
-        movies.forEach(m => {
-            container.innerHTML += `
+    <script>
+        async function load() {
+            const movies = await fetch('/api/movies').then(r => r.json());
+            const list = document.getElementById('list');
+            list.innerHTML = movies.map(m => `
                 <div class="movie-row">
                     <span>${m.title}</span>
-                    <button class="del-btn" onclick="deleteMovie('${m._id}')">Delete</button>
+                    <button style="width:auto; padding:5px; background:#333;" onclick="del('${m._id}')">Delete</button>
                 </div>
-            `;
-        });
-    }
-
-    // 2. Add a movie
-    async function addMovie() {
-        const adminPassword = document.getElementById('adminPass').value;
-        const title = document.getElementById('title').value;
-        const poster = document.getElementById('poster').value;
-        const videoUrl = document.getElementById('videoUrl').value;
-        const category = document.getElementById('category').value;
-
-        if(!adminPassword || !title || !videoUrl) return alert("Please fill Title, Video URL, and Password!");
-
-        const res = await fetch('/api/movies', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ title, poster, videoUrl, category, adminPassword })
-        });
-
-        if (res.ok) {
-            alert("✅ Movie Added Successfully!");
-            document.getElementById('title').value = '';
-            document.getElementById('videoUrl').value = '';
-            loadLibrary();
-        } else {
-            alert("❌ Failed to add. Check your password.");
+            `).join('');
         }
-    }
 
-    // 3. Delete a movie
-    async function deleteMovie(id) {
-        const adminPassword = document.getElementById('adminPass').value;
-        if(!adminPassword) return alert("Enter Admin Password first!");
+        async function add() {
+            const fd = new FormData();
+            fd.append('adminPassword', document.getElementById('pass').value);
+            fd.append('title', document.getElementById('title').value);
+            fd.append('videoUrl', document.getElementById('url').value);
+            fd.append('category', document.getElementById('cat').value);
+            fd.append('poster', document.getElementById('poster').files[0]);
 
-        if(!confirm("Are you sure you want to delete this movie?")) return;
-
-        const res = await fetch(`/api/movies/${id}`, {
-            method: 'DELETE',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ adminPassword })
-        });
-
-        if (res.ok) {
-            alert("🗑️ Movie Deleted.");
-            loadLibrary();
-        } else {
-            alert("❌ Delete failed. Check password.");
+            const res = await fetch('/api/movies', { method: 'POST', body: fd });
+            if(res.ok) { alert("Added!"); load(); } else { alert("Failed! Check password."); }
         }
-    }
 
-    // Initial Load
-    loadLibrary();
-</script>
-
+        async function del(id) {
+            const adminPassword = document.getElementById('pass').value;
+            if(!adminPassword) return alert("Enter password first");
+            const res = await fetch(`/api/movies/${id}`, {
+                method: 'DELETE',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ adminPassword })
+            });
+            if(res.ok) { alert("Deleted!"); load(); }
+        }
+        load();
+    </script>
 </body>
-</html>
+</h
+    tml>
