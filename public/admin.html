@@ -1,89 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8"><title>Admin Panel | Movies Dunia</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movie Manager | Admin</title>
     <style>
-        body { background: #000; color: #fff; font-family: sans-serif; padding: 20px; }
-        .box { background: #111; padding: 25px; border-radius: 12px; max-width: 500px; margin: 20px auto; border: 1px solid #222; }
-        h2 { color: #e50914; text-align: center; }
-        input, textarea, select { width: 100%; margin: 10px 0; padding: 12px; background: #222; color: #fff; border: 1px solid #333; box-sizing: border-box; border-radius: 6px; }
-        button { width: 100%; padding: 14px; background: #e50914; color: #fff; border: none; font-weight: bold; cursor: pointer; border-radius: 6px; }
-        button:disabled { background: #555; }
-        #progress { display:none; width: 100%; background: #333; margin-top: 15px; border-radius: 5px; overflow: hidden; }
-        #bar { width: 0%; height: 8px; background: #e50914; transition: 0.3s; }
-        .movie-row { display: flex; justify-content: space-between; padding: 10px; background: #1a1a1a; margin-top: 5px; border-radius: 4px; font-size: 0.9rem; }
+        :root { --red: #e50914; --dark: #141414; }
+        body { background: #000; color: white; font-family: sans-serif; margin: 0; padding: 20px; }
+        .admin-card { background: var(--dark); padding: 25px; border-radius: 10px; max-width: 500px; margin: auto; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        h2 { color: var(--red); text-align: center; margin-top: 0; }
+        .input-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; color: #aaa; font-size: 0.9rem; }
+        input, select { width: 100%; padding: 12px; background: #222; border: 1px solid #444; color: white; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 15px; background: var(--red); border: none; color: white; font-weight: bold; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+        button:hover { background: #b20710; }
+        .footer-hint { font-size: 0.8rem; color: #666; text-align: center; margin-top: 15px; }
     </style>
 </head>
 <body>
-    <div class="box">
-        <h2>Movie Manager</h2>
-        <input type="password" id="pass" placeholder="Admin Password">
-        <input type="text" id="title" placeholder="Movie Title">
-        <textarea id="desc" rows="3" placeholder="Description"></textarea>
-        <select id="cat"><option value="action">Action</option><option value="horror">Horror</option><option value="sci-fi">Sci-Fi</option></select>
-        <label style="color:#888; font-size:0.8rem;">Poster Image:</label><input type="file" id="pos" accept="image/*">
-        <label style="color:#888; font-size:0.8rem;">Video File:</label><input type="file" id="vid" accept="video/*">
-        <button id="upBtn" onclick="upload()">Upload to Cloud</button>
-        <div id="progress"><div id="bar"></div><div id="status" style="text-align:center; font-size:0.7rem; margin-top:5px;">Uploading...</div></div>
+
+<div class="admin-card">
+    <h2>Movie Manager</h2>
+    
+    <div class="input-group">
+        <label>Movie Title</label>
+        <input type="text" id="title" placeholder="e.g. Pushpa 2">
     </div>
-    <div class="box">
-        <h3>Current Library</h3>
-        <div id="list">Loading...</div>
+
+    <div class="input-group">
+        <label>Poster Image URL</label>
+        <input type="text" id="poster" placeholder="Paste link to image here">
     </div>
+
+    <div class="input-group">
+        <label>Video URL or Telegram Link</label>
+        <input type="text" id="videoUrl" placeholder="Paste .mp4 or t.me link here">
+    </div>
+
+    <div class="input-group">
+        <label>Category</label>
+        <select id="category">
+            <option value="Action">Action</option>
+            <option value="Hollywood">Hollywood</option>
+            <option value="Desi">Desi</option>
+            <option value="Telegram Exclusive">Telegram Exclusive</option>
+        </select>
+    </div>
+
+    <button onclick="addMovie()">Add to Website</button>
+
+    <div class="footer-hint">
+        Tip: Paste Telegram post links to open in the app automatically.
+    </div>
+</div>
 
 <script>
-    async function load() {
-        const res = await fetch('/api/movies');
-        const movies = await res.json();
-        document.getElementById('list').innerHTML = movies.map(m => `
-            <div class="movie-row">
-                <span>${m.title}</span>
-                <button onclick="del('${m._id}')" style="width:auto; padding:2px 8px; background:#444;">Delete</button>
-            </div>`).join('');
-    }
-
-    async function upload() {
-        const pass = document.getElementById('pass').value;
+    async function addMovie() {
         const title = document.getElementById('title').value;
-        const vid = document.getElementById('vid').files[0];
-        if(!pass || !title || !vid) return alert("Fill required fields!");
+        const poster = document.getElementById('poster').value;
+        const videoUrl = document.getElementById('videoUrl').value;
+        const category = document.getElementById('category').value;
 
-        const fd = new FormData();
-        fd.append("password", pass);
-        fd.append("title", title);
-        fd.append("overview", document.getElementById('desc').value);
-        fd.append("category", document.getElementById('cat').value);
-        fd.append("video", vid);
-        fd.append("poster", document.getElementById('pos').files[0]);
+        if(!title || !poster || !videoUrl) return alert("Please fill all fields!");
 
-        document.getElementById('progress').style.display = 'block';
-        document.getElementById('bar').style.width = '30%';
-        document.getElementById('upBtn').disabled = true;
-
-        try {
-            const res = await fetch('/api/movies/upload', { method: "POST", body: fd });
-            if(res.ok) { 
-                document.getElementById('bar').style.width = '100%';
-                alert("Upload Successful!"); 
-                location.reload(); 
-            } else { alert("Failed: Check Password or File Size."); }
-        } catch(e) { alert("Error uploading."); }
-        document.getElementById('upBtn').disabled = false;
-    }
-
-    async function del(id) {
-        const password = document.getElementById('pass').value;
-        if(!password) return alert("Enter password!");
-        if(!confirm("Delete?")) return;
-        await fetch(`/api/movies/${id}`, { 
-            method: "DELETE", 
-            headers: {"Content-Type": "application/json"}, 
-            body: JSON.stringify({ password }) 
+        const res = await fetch('/api/movies', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, poster, videoUrl, category })
         });
-        load();
+
+        if (res.ok) {
+            alert("Success! Movie added.");
+            window.location.href = "/";
+        } else {
+            alert("Error adding movie.");
+        }
     }
-    load();
 </script>
-</body>
-<
-    /html>
+
+</bo
+    dy>
+</html>
